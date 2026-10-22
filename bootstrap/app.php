@@ -1,0 +1,43 @@
+<?php
+
+use App\Http\Middleware\CompanyContext;
+use App\Http\Middleware\PlatformAuthenticate;
+use App\Http\Middleware\PlatformPathFallbackOnly;
+use App\Http\Middleware\PlatformTwoFactor;
+use App\Http\Middleware\RequireSuperAdmin;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\SetPlatformSession;
+use App\Support\PlatformUrl;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // Order matters: the platform session settings and the company (tenancy) context must be
+        // in place before the session starts and before any user is loaded.
+        $middleware->web(prepend: [SetPlatformSession::class, CompanyContext::class], append: [SetLocale::class]);
+
+        $middleware->alias([
+            'platform.auth' => PlatformAuthenticate::class,
+            'platform.2fa' => PlatformTwoFactor::class,
+            'platform.super' => RequireSuperAdmin::class,
+            'platform.fallback' => PlatformPathFallbackOnly::class,
+        ]);
+
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->routeIs('platform.*')
+            ? PlatformUrl::route('login')
+            : route('login'));
+        $middleware->redirectUsersTo('/');
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
+    })->create();

@@ -1,0 +1,60 @@
+# Environment files (only the example is committed)
+.env
+.env.*
+!.env.example
+/auth.json
+
+# Dependencies
+/node_modules
+/vendor
+
+# Build output
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+
+# Runtime storage
+/storage/*.key
+/storage/pail
+# Per-tenant storage folders created by stancl/tenancy (storage/tenant<id>)
+/storage/tenant*
+
+# Tests and coverage
+.phpunit.result.cache
+/.phpunit.cache
+/coverage
+
+# Logs and local service dumps
+*.log
+dump.rdb
+
+# Local dev server (OSPanel) and Homestead
+/.osp
+Homestead.json
+Homestead.yaml
+
+# IDE and editor
+/.codex
+/.cursor/
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.phpactor.json
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+*.swp
+*.swo
+
+# Claude Code local settings
+/.claude/settings.local.json
+CLAUDE.local.md
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+/storage/framework/phpstan
