@@ -13,6 +13,51 @@ class ImportTransactions
     /** Date formats the user can choose from. */
     public const DATE_FORMATS = ['d.m.Y', 'Y-m-d', 'd/m/Y', 'm/d/Y'];
 
+    /** Header words (uz/ru/en, lower case) that identify each column of a bank statement. */
+    private const HEADER_ALIASES = [
+        'date' => ['sana', 'сана', 'дата', 'date', 'kun'],
+        'amount' => ['summa', 'сумма', 'amount', 'miqdor'],
+        'description' => ['izoh', 'maqsad', 'maqsadi', 'назначение', 'описание', 'комментарий', 'description', 'purpose', 'details'],
+        'type' => ['tur', 'turi', 'тип', 'вид', 'type', 'kirim/chiqim'],
+        'reference' => ['tolov raqami', 'hujjat raqami', 'hujjat', 'номер', 'документ', 'reference', 'ref', 'number'],
+    ];
+
+    /**
+     * The column a header row most likely holds for each field; date and amount fall back to the first two columns.
+     *
+     * @param  list<string>  $headers
+     * @return array{date: int, amount: int, description: ?int, type: ?int, reference: ?int}
+     */
+    public function guessColumns(array $headers): array
+    {
+        $normalized = array_map(fn (string $h) => mb_strtolower(trim(str_replace(['ʻ', '‘', '’', "'"], '', $h))), $headers);
+        $taken = [];
+        $guess = [];
+
+        foreach (self::HEADER_ALIASES as $field => $aliases) {
+            $guess[$field] = null;
+            foreach ($normalized as $i => $header) {
+                if (in_array($i, $taken, true) || $header === '') {
+                    continue;
+                }
+                $words = preg_split('/[^\p{L}\/]+/u', $header, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                if (array_intersect($aliases, $words) !== [] || in_array($header, $aliases, true)) {
+                    $guess[$field] = $i;
+                    $taken[] = $i;
+                    break;
+                }
+            }
+        }
+
+        return [
+            'date' => $guess['date'] ?? 0,
+            'amount' => $guess['amount'] ?? 1,
+            'description' => $guess['description'],
+            'type' => $guess['type'],
+            'reference' => $guess['reference'],
+        ];
+    }
+
     /**
      * Read a delimited text file; returns the delimiter and all rows (first row = header).
      *

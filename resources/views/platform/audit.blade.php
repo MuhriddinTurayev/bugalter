@@ -2,7 +2,7 @@
     <x-ui.page-header :title="__('platform.audit.title')" :subtitle="__('platform.audit.subtitle')" />
 
     <x-ui.card padding="p-0">
-        <form method="get" class="grid gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_9rem_9rem_auto]">
+        <form method="get" class="grid grid-cols-1 gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_9rem_9rem_auto]">
             <select name="action" class="field" aria-label="{{ __('platform.audit.action') }}">
                 <option value="">{{ __('platform.audit.all_actions') }}</option>
                 @foreach ($actions as $action)<option value="{{ $action }}" @selected(request('action') === $action)>{{ __('platform.audit.actions.'.$action) }}</option>@endforeach

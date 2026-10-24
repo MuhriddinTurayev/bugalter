@@ -2,7 +2,7 @@
     <x-ui.page-header :title="__('ui.history.title')" :subtitle="__('ui.history.subtitle')" />
 
     <x-ui.card padding="p-0">
-        <form method="get" class="grid gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[1fr_9rem_11rem_9rem_9rem_auto]">
+        <form method="get" class="grid grid-cols-1 gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[1fr_9rem_11rem_9rem_9rem_auto]">
             <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('ui.bank.search') }}" class="field" aria-label="{{ __('ui.common.search') }}">
             <select name="type" class="field" aria-label="{{ __('ui.bank.fields.type') }}">
                 <option value="">{{ __('ui.common.all') }}</option>

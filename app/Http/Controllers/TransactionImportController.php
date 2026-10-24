@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Actions\ImportTransactions;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Services\Audit;
+use App\Services\PlanLimits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,7 @@ class TransactionImportController extends Controller
 
         return view('bank.import', [
             'preview' => $preview,
+            'defaultColumns' => $import->guessColumns($preview['headers'] ?? []),
             'accounts' => Account::query()->where('is_active', true)->orderBy('name')->get(),
             'dateFormats' => ImportTransactions::DATE_FORMATS,
         ]);
@@ -76,6 +79,9 @@ class TransactionImportController extends Controller
 
         $nullable = fn (string $key) => isset($data[$key]) ? (int) $data[$key] : null;
 
+        // The plan limit counts every row the file could add (the header row excluded).
+        app(PlanLimits::class)->ensure(PlanLimits::TRANSACTIONS, max(0, count($import->read(Storage::disk('local')->path($path))['rows']) - 1));
+
         $result = $import(
             Storage::disk('local')->path($path),
             [
@@ -92,6 +98,7 @@ class TransactionImportController extends Controller
 
         Storage::disk('local')->delete($path);
         $request->session()->forget('transaction_import');
+        app(Audit::class)->record('transaction.imported', ['account' => (int) $data['account_id'], 'created' => $result['created'], 'skipped' => $result['skipped']]);
 
         return redirect()->route('bank.index')
             ->with('status', __('ui.bank.import_done', ['created' => $result['created'], 'skipped' => $result['skipped']]))

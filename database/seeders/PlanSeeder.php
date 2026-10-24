@@ -22,7 +22,7 @@ class PlanSeeder extends Seeder
         foreach ($plans as [$key, $name, $limits]) {
             Plan::query()->firstOrCreate(['key' => $key], [
                 'name' => $name,
-                'description' => 'Demo plan: price and limits are entered in the panel.',
+                'description' => 'Namuna tarif: narx va cheklovlar panelda kiritiladi.',
                 'limits' => $limits === [] ? null : $limits,
                 'is_active' => true,
             ]);

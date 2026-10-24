@@ -10,7 +10,7 @@
         </x-ui.card>
     @endif
 
-    <div class="grid max-w-5xl gap-5 lg:grid-cols-2">
+    <div class="grid grid-cols-1 max-w-5xl gap-5 lg:grid-cols-2">
         <x-ui.card>
             <h2 class="mb-4 font-semibold">{{ __('platform.profile.change_password') }}</h2>
             <form method="post" action="{{ platform_route('profile.password') }}" class="space-y-4">

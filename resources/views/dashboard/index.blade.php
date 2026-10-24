@@ -61,7 +61,8 @@
         </div>
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-12">
+    {{-- grid-cols-1 (minmax(0, 1fr)): on a phone, wide content must not stretch the column past the screen. --}}
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
 
         {{-- Balance + weekly revenue --}}
         <div class="space-y-5 lg:col-span-3">
@@ -244,33 +245,42 @@
             </x-dashboard.state>
         </x-ui.card>
 
-        {{-- Tax calendar placeholder --}}
+        {{-- Tax calendar: the next reports the company owes --}}
         <x-ui.card class="lg:col-span-6">
             <div class="flex items-start gap-4">
                 <span class="grid size-11 shrink-0 place-items-center rounded-full bg-soft text-muted"><x-ui.icon name="calendar" class="size-5" /></span>
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
+                <div class="min-w-0 grow">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
                         <p class="text-sm font-semibold">{{ __('ui.dashboard.tax.title') }}</p>
-                        <x-ui.badge>{{ __('ui.common.coming_soon') }}</x-ui.badge>
+                        @can('view-reports')<a href="{{ route('tax.index') }}" class="text-xs font-semibold text-brand-700 hover:underline">{{ __('ui.dashboard.tax.open') }}</a>@endcan
                     </div>
-                    <p class="mt-1 text-sm text-muted">{{ __('ui.dashboard.tax.body') }}</p>
+                    @forelse ($upcomingTaxes as $row)
+                        @php $days = (int) today()->diffInDays($row['due_date'], false); @endphp
+                        <div class="mt-2 flex items-center justify-between gap-3 text-sm">
+                            <span class="min-w-0 truncate">{{ $row['type']->label() }} · {{ $row['period']->label() }}</span>
+                            <span @class(['shrink-0 tabular-nums text-xs font-semibold', 'text-red-600' => $days < 0, 'text-amber-700' => $days >= 0 && $days <= 7, 'text-muted' => $days > 7])>
+                                {{ $row['due_date']->format('d.m.Y') }}
+                                @if ($row['report'])<x-ui.badge :tone="$row['report']->status->tone()" class="ml-1">{{ $row['report']->status->label() }}</x-ui.badge>@endif
+                            </span>
+                        </div>
+                    @empty
+                        <p class="mt-1 text-sm text-muted">{{ __('ui.dashboard.tax.body') }}</p>
+                    @endforelse
                 </div>
             </div>
         </x-ui.card>
 
-        {{-- AI assistant (disabled) --}}
-        <x-ui.card class="lg:col-span-6 opacity-80" aria-disabled="true">
+        {{-- AI accountant --}}
+        <x-ui.card class="lg:col-span-6">
             <div class="flex items-start gap-4">
                 <span class="grid size-11 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600"><x-ui.icon name="sparkles" class="size-5" /></span>
                 <div class="min-w-0 grow">
                     <div class="flex flex-wrap items-center gap-2">
                         <p class="text-sm font-semibold">{{ __('ui.dashboard.ai.title') }}</p>
-                        <x-ui.badge tone="warning">{{ __('ui.common.coming_soon') }}</x-ui.badge>
+                        <x-ui.badge :tone="$aiProvider ? 'success' : 'warning'">{{ $aiProvider ?? __('ui.dashboard.ai.not_configured') }}</x-ui.badge>
                     </div>
                     <p class="mt-1 text-sm text-muted">{{ __('ui.dashboard.ai.body') }}</p>
-                    <button type="button" disabled class="mt-3 inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-soft px-4 py-2 text-sm font-semibold text-muted">
-                        <x-ui.icon name="sparkles" class="size-4" /> {{ __('ui.dashboard.ai.button') }}
-                    </button>
+                    <x-ui.button :href="route('ai.index')" variant="soft" size="sm" icon="sparkles" class="mt-3">{{ __('ui.dashboard.ai.button') }}</x-ui.button>
                 </div>
             </div>
         </x-ui.card>

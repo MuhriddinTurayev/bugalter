@@ -7,7 +7,7 @@
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <a href="{{ platform_route('companies.index') }}" class="card block p-5 transition hover:-translate-y-0.5">
             <p class="text-xs font-semibold text-muted">{{ __('platform.dashboard.total') }}</p>
             <p class="mt-1 text-3xl font-semibold tabular-nums">{{ $total }}</p>
@@ -23,7 +23,7 @@
         @endforeach
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div class="space-y-5 lg:col-span-2">
             <x-ui.card padding="p-0">
                 <div class="flex items-center justify-between border-b border-line px-5 py-4">

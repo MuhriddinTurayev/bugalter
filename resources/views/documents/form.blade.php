@@ -22,7 +22,7 @@
         @endif
 
         <x-ui.card>
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-ui.select name="type" :label="__('ui.documents.fields.type')" :value="$document->type?->value" required>
                     @foreach (\App\Enums\DocumentType::cases() as $case)
                         <option value="{{ $case->value }}" @selected(old('type', $document->type?->value) === $case->value)>{{ $case->label() }}</option>

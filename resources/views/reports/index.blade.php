@@ -7,10 +7,13 @@
     <x-ui.card class="mb-5">
         <div class="flex items-start gap-4">
             <span class="grid size-11 shrink-0 place-items-center rounded-full {{ $taxRulesLoaded ? 'bg-brand-50 text-brand-600' : 'bg-amber-50 text-amber-600' }}"><x-ui.icon :name="$taxRulesLoaded ? 'check' : 'warning'" class="size-5" /></span>
-            <div>
+            <div class="grow">
                 <p class="font-semibold">{{ $taxRulesLoaded ? __('ui.reports.tax_ready_title') : __('ui.reports.tax_missing_title') }}</p>
                 <p class="mt-1 text-sm text-muted">{{ $taxRulesLoaded ? __('ui.reports.tax_ready_body') : __('ui.reports.tax_missing_body') }}</p>
             </div>
+            @if ($taxRulesLoaded)
+                <x-ui.button :href="route('tax.index')" icon="calculator">{{ __('ui.nav.tax') }}</x-ui.button>
+            @endif
         </div>
     </x-ui.card>
 
@@ -22,13 +25,13 @@
         </form>
     </x-ui.card>
 
-    <div class="mb-5 grid gap-5 sm:grid-cols-3">
+    <div class="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
         <x-ui.card padding="p-5"><p class="text-xs font-semibold text-muted">{{ __('ui.reports.income') }}</p><p class="amount mt-1 text-2xl font-semibold text-brand-700">{{ $income }}</p></x-ui.card>
         <x-ui.card padding="p-5"><p class="text-xs font-semibold text-muted">{{ __('ui.reports.expense') }}</p><p class="amount mt-1 text-2xl font-semibold">{{ $expense }}</p></x-ui.card>
         <x-ui.card padding="p-5"><p class="text-xs font-semibold text-muted">{{ __('ui.reports.net') }}</p><p class="amount mt-1 text-2xl font-semibold">{{ $net }}</p></x-ui.card>
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
         @foreach ([[__('ui.reports.income_by_category'), $incomeRows], [__('ui.reports.expense_by_category'), $expenseRows]] as [$heading, $rows])
             <x-ui.card padding="p-0">
                 <h2 class="border-b border-line px-5 py-4 font-semibold">{{ $heading }}</h2>

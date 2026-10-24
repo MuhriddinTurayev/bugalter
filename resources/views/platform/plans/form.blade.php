@@ -13,7 +13,7 @@
         @if ($editing) @method('PUT') @endif
 
         <x-ui.card>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-ui.input name="name" :label="__('platform.plans.fields.name')" :value="$plan->name" required />
                 <x-ui.input name="key" :label="__('platform.plans.fields.key')" :value="$plan->key" :hint="__('platform.plans.key_hint')" required />
                 <x-ui.textarea class="sm:col-span-2" name="description" :label="__('platform.plans.fields.description')" :value="$plan->description" rows="2" />
@@ -28,7 +28,7 @@
         <x-ui.card>
             <h2 class="mb-1 font-semibold">{{ __('platform.plans.limits_title') }}</h2>
             <p class="mb-4 text-sm text-muted">{{ __('platform.plans.limits_hint') }}</p>
-            <div class="grid gap-4 sm:grid-cols-3">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 @foreach (\App\Http\Requests\Platform\PlanRequest::LIMITS as $limit)
                     <x-ui.input :name="'limits['.$limit.']'" inputmode="numeric" :label="__('platform.plans.limits.'.$limit)" :value="$plan->limit($limit)" :placeholder="__('platform.plans.unlimited')" />
                 @endforeach

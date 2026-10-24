@@ -15,6 +15,7 @@ use App\Services\Platform\PlatformAudit;
 use App\Services\Platform\SupportAccess;
 use App\Services\Platform\TenantProvisioningService;
 use App\Support\PlatformUrl;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -127,6 +128,18 @@ class CompanyController extends Controller
         $this->audit->record('company.plan_changed', $tenant->id, null, ['from' => $old, 'to' => (int) $data['plan_id']], $request->user('platform'));
 
         return back()->with('status', __('platform.companies.plan_changed'));
+    }
+
+    /** Sets (or clears) the subscription end date. After it, the company is read-only until extended. */
+    public function subscription(Request $request, Tenant $tenant): RedirectResponse
+    {
+        $data = $request->validate(['subscription_ends_at' => ['nullable', 'date']]);
+        $old = $tenant->subscription_ends_at?->toDateString();
+
+        $tenant->update(['subscription_ends_at' => isset($data['subscription_ends_at']) ? CarbonImmutable::parse($data['subscription_ends_at'])->endOfDay() : null]);
+        $this->audit->record('company.subscription_changed', $tenant->id, null, ['from' => $old, 'to' => $data['subscription_ends_at'] ?? null], $request->user('platform'));
+
+        return back()->with('status', __('platform.companies.subscription_saved'));
     }
 
     public function suspend(Request $request, Tenant $tenant): RedirectResponse

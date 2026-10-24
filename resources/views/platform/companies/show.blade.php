@@ -42,11 +42,11 @@
 
     @error('support')<div class="mb-5 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-amber-200">{{ $message }}</div>@enderror
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div class="space-y-5 lg:col-span-2">
             <x-ui.card>
                 <h2 class="mb-4 font-semibold">{{ __('platform.companies.info') }}</h2>
-                <dl class="grid gap-4 text-sm sm:grid-cols-2">
+                <dl class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                     <div><dt class="label">{{ __('platform.companies.link') }}</dt><dd class="flex flex-wrap items-center gap-2"><a href="{{ $company->url() }}" target="_blank" rel="noopener" class="font-semibold text-brand-700 hover:underline">{{ $company->host() }}</a><x-ui.copy :value="$company->url()" /></dd></div>
                     <div><dt class="label">{{ __('platform.companies.fields.stir') }}</dt><dd>{{ $company->stir ?? '—' }}</dd></div>
                     <div><dt class="label">{{ __('platform.companies.fields.plan_id') }}</dt><dd>{{ $company->plan?->name ?? '—' }}</dd></div>
@@ -56,12 +56,20 @@
                     <div><dt class="label">{{ __('platform.companies.members') }}</dt><dd class="tabular-nums">{{ $meta['members'] ?? '—' }}</dd></div>
                     <div><dt class="label">{{ __('platform.companies.subscription') }}</dt><dd>{{ $company->subscription_ends_at ? $company->subscription_ends_at->format('d.m.Y') : __('platform.companies.not_set') }}@if ($company->isSubscriptionExpired()) <x-ui.badge tone="danger">{{ __('platform.companies.subscription_expired') }}</x-ui.badge>@endif</dd></div>
                 </dl>
+                @if ($staff->isSuperAdmin())
+                    <form method="post" action="{{ platform_route('companies.subscription', $company) }}" class="mt-4 flex flex-wrap items-end gap-2">
+                        @csrf @method('PATCH')
+                        <x-ui.input name="subscription_ends_at" type="date" :label="__('platform.companies.subscription_until')" :value="$company->subscription_ends_at?->toDateString()" class="w-48" />
+                        <x-ui.button type="submit" variant="secondary" size="sm">{{ __('platform.common.save') }}</x-ui.button>
+                    </form>
+                    <p class="mt-1 text-xs text-muted">{{ __('platform.companies.subscription_hint') }}</p>
+                @endif
                 <p class="mt-4 rounded-xl bg-soft px-3 py-2 text-xs text-muted">{{ __('platform.companies.no_business_data') }}</p>
             </x-ui.card>
 
             <x-ui.card>
                 <h2 class="mb-4 font-semibold">{{ __('platform.companies.owner') }}</h2>
-                <dl class="grid gap-4 text-sm sm:grid-cols-2">
+                <dl class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                     <div><dt class="label">{{ __('platform.companies.fields.owner_name') }}</dt><dd>{{ $company->owner_name ?? '—' }}</dd></div>
                     <div><dt class="label">{{ __('platform.companies.fields.owner_email') }}</dt><dd>{{ $company->owner_email ?? '—' }}</dd></div>
                     <div><dt class="label">{{ __('platform.companies.fields.owner_phone') }}</dt><dd>{{ $company->owner_phone ?? '—' }}</dd></div>

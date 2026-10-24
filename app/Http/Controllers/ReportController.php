@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\TransactionType;
 use App\Models\Transaction;
 use App\Support\Money;
+use App\Tax\TaxRuleBook;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -40,8 +41,8 @@ class ReportController extends Controller
             'net' => Money::format($income - $expense),
             'incomeRows' => $byCategory(TransactionType::Income),
             'expenseRows' => $byCategory(TransactionType::Expense),
-            // Tax figures are never invented: they appear only once the rules are loaded and wired to calculators.
-            'taxRulesLoaded' => is_file(base_path('docs/tax/rules.md')),
+            // Tax figures are never invented: they come from the rules tables through the calculators (Taxes page).
+            'taxRulesLoaded' => app(TaxRuleBook::class)->isLoaded(),
         ]);
     }
 

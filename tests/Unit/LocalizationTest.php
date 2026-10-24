@@ -19,7 +19,7 @@ it('has the same translation keys in Uzbek and Russian', function (string $file)
     $ru = array_keys(flattenLang(require lang_path("ru/$file.php")));
 
     expect(array_diff($uz, $ru))->toBe([])->and(array_diff($ru, $uz))->toBe([]);
-})->with(['ui', 'platform', 'app', 'auth', 'validation', 'passwords', 'pagination']);
+})->with(['ui', 'platform', 'app', 'auth', 'validation', 'passwords', 'pagination', 'tax', 'ai', 'payroll', 'autopilot']);
 
 it('uses the same placeholders in both languages', function (string $file) {
     $uz = flattenLang(require lang_path("uz/$file.php"));
@@ -31,7 +31,7 @@ it('uses the same placeholders in both languages', function (string $file) {
 
         expect(collect($a[0])->map(fn ($p) => strtolower($p))->sort()->values()->all())->toBe(collect($b[0])->map(fn ($p) => strtolower($p))->sort()->values()->all(), "placeholders differ for $file.$key");
     }
-})->with(['ui', 'platform']);
+})->with(['ui', 'platform', 'tax', 'ai', 'payroll', 'autopilot']);
 
 it('defaults to Uzbek', function () {
     expect(config('app.locale'))->toBe('uz')->and(config('app.fallback_locale'))->toBe('uz');

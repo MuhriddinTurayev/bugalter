@@ -1,0 +1,218 @@
+{
+  "_readme": "Selectors and URLs of my.soliq.uz pages BEHIND the login. Every section is filled only from what the discovery run (npm run discover) actually observed in a signed-in browser; a section that is null was NOT observed and makes the agent stop with a precise message when it is needed. Nothing here is guessed.",
+  "observed": {
+    "2026-10-24": "Individual (jismoniy shaxs) cabinet, 40 pages read-only. Identity element, individual declaration service, menu structure.",
+    "2026-10-24 (e-reporting)": "Reporting system oldmy.soliq.uz/wefo4-clientui reached by clicking the service card on my.soliq.uz/with-sidebar/services. Journal, report view, confirmation page, catalog, blank form of 10190_14. Individual (jismoniy shaxs) cabinet only.",
+    "2026-10-24 (turnover form)": "Form 10190_14 read with period September chosen: lines 010 020 030 040 050 060 070 0701 080 and appendix 0101-0105 are filled by the cabinet.",
+    "2026-10-24 (entrepreneur cabinet)": "ЯТТнинг шахсий кабинети (header switch \"Ўтиш\"): payment form with tax types 38/47/100/199, personal tax card (KLS) per tax, letters (requirements/notices), reporting card \"ЯТТларнинг солиқ ҳисоботларини юбориш\" (user_type=3)."
+  },
+  "identity": {
+    "tin": {
+      "selector": "[class*=\"Header_userIdentifier\"]",
+      "attribute": null,
+      "digits": {
+        "individual": 14,
+        "legal": null
+      }
+    },
+    "name": {
+      "selector": null
+    }
+  },
+  "services": {
+    "individual_annual_income_declaration": {
+      "title_uz": "Жисмоний шахснинг жами йиллик даромадлари тўғрисидаги декларация",
+      "applies_to": "individual",
+      "url": "/remotes-services/declaration/?interactiveId=629",
+      "history_url": "/remotes-services/declaration/history?interactiveId=629",
+      "income_sources_url": "/remotes-services/declaration/income?interactiveId=629",
+      "form_field_ids": [
+        "pinfl",
+        "fullName",
+        "resident",
+        "citizenship",
+        "passportData",
+        "addressReg",
+        "phoneNumber",
+        "mainTypeId",
+        "na2Code",
+        "reportType",
+        "year",
+        "period"
+      ],
+      "save_button_text": "Сақлаш",
+      "note": "The only declaration this individual cabinet offers. It is NOT one of Bugalter's report types (VAT, turnover, profit, payroll): Bugalter holds no personal-income data for it."
+    },
+    "company_reports": {
+      "applies_to": "legal, entrepreneur",
+      "entry": "Redirect to https://oldmy.soliq.uz (wefo4-clientui). A different application on another host; NOT observed yet because an individual key does not reach it."
+    }
+  },
+  "reports_list": {
+    "url": null,
+    "row": null,
+    "columns": {
+      "form": null,
+      "period": null,
+      "status": null,
+      "submitted_at": null,
+      "receipt": null
+    },
+    "form_types": {},
+    "status_words": {
+      "accepted": [],
+      "submitted": [],
+      "rejected": [],
+      "draft": []
+    }
+  },
+  "balances": {
+    "url": null,
+    "row": null,
+    "columns": {
+      "tax": null,
+      "debt": null,
+      "overpaid": null,
+      "penalty": null
+    }
+  },
+  "forms": {
+    "vat": {
+      "url": null,
+      "fields": {},
+      "validation_messages": null,
+      "sign_button": null,
+      "result": {}
+    },
+    "turnover": {
+      "url": null,
+      "fields": {},
+      "validation_messages": null,
+      "sign_button": null,
+      "result": {},
+      "wefo": {
+        "form_code": "10190_14",
+        "tax_value": "100",
+        "kind_value": "1",
+        "selects": {
+          "tax": "#na2_id",
+          "kind": "#type",
+          "year": "#year",
+          "period": "#perioddd"
+        },
+        "send_button": "#form-send-button",
+        "signature_field": "#xml_report_pkcs7",
+        "note": "Observed 2026-10-24 (read only, nothing saved): choosing tax 100, kind 1, year and period M_n makes the cabinet fill the sheets itself. The send flow (E-IMZO dialog, result) was NOT observed."
+      }
+    },
+    "profit": {
+      "url": null,
+      "fields": {},
+      "validation_messages": null,
+      "sign_button": null,
+      "result": {}
+    },
+    "payroll": {
+      "url": null,
+      "fields": {},
+      "validation_messages": null,
+      "sign_button": null,
+      "result": {}
+    }
+  },
+  "reporting": {
+    "system": "oldmy.soliq.uz (wefo4-clientui)",
+    "entry_text": {
+      "individual": "Жисмоний шахс",
+      "legal": null,
+      "entrepreneur": "солиқ ҳисоботларини юбориш"
+    },
+    "journal_url": "https://oldmy.soliq.uz/wefo4-clientui/form/ru/reports/0",
+    "panes": {
+      "processing": "#div_processing_reports",
+      "error": "#div_error_reports",
+      "approved": "#div_approved_reports",
+      "sent": "#div_sent_reports",
+      "rejected": "#div_rejected_reports",
+      "draft": "#div_draft_reports",
+      "scheduled": "#div_scheduled_reports"
+    },
+    "columns": [
+      "Действие",
+      "№ Отчета",
+      "№ Пакет",
+      "Наименование",
+      "Год",
+      "Период",
+      "Дата отправки",
+      "Сертификат",
+      "Состояние",
+      "Дата проверки",
+      "Инспектор",
+      "Регион",
+      "Дата создания",
+      "IP адрес"
+    ],
+    "state_words_observed": {
+      "approved": [
+        "Проведенный с опозданием"
+      ]
+    },
+    "form_types": {
+      "налога с оборота": "turnover",
+      "налога на прибыль": "profit"
+    },
+    "catalog": {
+      "url": "/wefo4-clientui/catalog/ru/get/package_groups",
+      "turnover_forms": [
+        "10190_14",
+        "10190_13",
+        "10190_11",
+        "10190_10"
+      ],
+      "profit_forms": [
+        "10290_9",
+        "10290_8"
+      ]
+    },
+    "blank_form": {
+      "url": "/wefo4-clientui/form/ru/report/10190_14",
+      "opening_creates_a_draft": false,
+      "header_selects": [
+        "na2_id",
+        "type",
+        "year",
+        "perioddd",
+        "region",
+        "sheets"
+      ],
+      "buttons": {
+        "save": "Сохранить",
+        "send": "Отправить",
+        "back": "Назад"
+      },
+      "hidden_fields": [
+        "xml_report_pkcs7",
+        "attachment_pkcs7",
+        "is_draft",
+        "report_id",
+        "package_id",
+        "period",
+        "year"
+      ],
+      "cells": "spreadsheet-like table (no <input> per cell); cells are edited through dialog-sheet-no/row-no/col-no dialogs",
+      "notice": "Данный налоговый отчет автоматизирован со стороны налоговых органов (shown on 10190_14 for individual entrepreneurs)"
+    },
+    "report_view": {
+      "edit_link": "redirects to my.soliq.uz /legal/cabinet/all-services?intIds=...&reportId=...&packageId=..."
+    },
+    "not_observed": [
+      "VAT form names",
+      "payroll/PIT forms",
+      "quarterly period wording",
+      "receipt number on the confirmation page",
+      "legal-entity (user_type=2) entry",
+      "send flow after \"Отправить\": E-IMZO dialog, confirmation, result"
+    ]
+  }
+}

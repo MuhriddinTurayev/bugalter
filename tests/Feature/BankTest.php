@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\ImportTransactions;
 use App\Enums\Role;
 use App\Models\Account;
 use App\Models\Category;
@@ -142,6 +143,23 @@ describe('CSV import with column mapping', function () {
             ->and($rows[0]->occurred_at->format('Y-m-d'))->toBe('2026-03-15');
 
         expect(session('transaction_import'))->toBeNull();
+    });
+
+    it('pre-selects columns from uz, ru and en header names', function (array $headers, array $expected) {
+        expect(app(ImportTransactions::class)->guessColumns($headers))->toBe($expected);
+    })->with([
+        'uzbek' => [['Hujjat raqami', 'Sana', 'Toʻlov maqsadi', 'Summa (soʻm)', 'Turi'], ['date' => 1, 'amount' => 3, 'description' => 2, 'type' => 4, 'reference' => 0]],
+        'russian' => [['Дата', 'Назначение платежа', 'Сумма'], ['date' => 0, 'amount' => 2, 'description' => 1, 'type' => null, 'reference' => null]],
+        'unknown' => [['A', 'B', 'C'], ['date' => 0, 'amount' => 1, 'description' => null, 'type' => null, 'reference' => null]],
+    ]);
+
+    it('selects the guessed columns on the mapping step', function () {
+        signIn(Role::ChiefAccountant);
+        post(route('bank.import.upload'), ['file' => UploadedFile::fake()->createWithContent('s.csv', "Summa;Sana;Izoh\n100;15.03.2026;Test\n")]);
+
+        get('/bank/import')->assertOk()
+            ->assertSee('<option value="2" selected>Izoh</option>', false)
+            ->assertSee('<option value="1" selected>Sana</option>', false);
     });
 
     it('detects comma and tab delimiters and a BOM', function () {

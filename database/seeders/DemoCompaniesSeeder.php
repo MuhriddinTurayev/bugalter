@@ -45,7 +45,10 @@ class DemoCompaniesSeeder extends Seeder
             /** @var Tenant $tenant */
             $tenant = $result['tenant'];
 
-            $tenant->run(fn () => app(DemoSeeder::class)->forCompany($name, $variant)->run(app(SaveDocument::class)));
+            $tenant->run(function () use ($name, $variant) {
+                app(DemoSeeder::class)->forCompany($name, $variant)->run(app(SaveDocument::class));
+                app()->call([app(DemoAccountingSeeder::class)->forVariant($variant), 'run']);
+            });
         }
     }
 

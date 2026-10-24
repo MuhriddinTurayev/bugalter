@@ -13,7 +13,7 @@
 
         <x-ui.card>
             <h2 class="mb-4 font-semibold">{{ __('ui.contractors.main') }}</h2>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-ui.input class="sm:col-span-2" name="name" :label="__('ui.contractors.fields.name')" :value="$contractor->name" required />
                 <x-ui.input name="stir" :label="__('ui.contractors.fields.stir')" :value="$contractor->stir" inputmode="numeric" maxlength="14" :hint="__('ui.contractors.hints.stir')" />
                 <x-ui.select name="type" :label="__('ui.contractors.fields.type')" :value="$contractor->type?->value" required>
@@ -29,7 +29,7 @@
 
         <x-ui.card>
             <h2 class="mb-4 font-semibold">{{ __('ui.contractors.bank') }}</h2>
-            <div class="grid gap-4 sm:grid-cols-3">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <x-ui.input name="bank_name" :label="__('ui.contractors.fields.bank_name')" :value="$contractor->bank_name" />
                 <x-ui.input name="bank_account" :label="__('ui.contractors.fields.bank_account')" :value="$contractor->bank_account" inputmode="numeric" maxlength="20" />
                 <x-ui.input name="mfo" :label="__('ui.contractors.fields.mfo')" :value="$contractor->mfo" inputmode="numeric" maxlength="5" />

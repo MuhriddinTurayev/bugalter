@@ -1,6 +1,5 @@
 @php
     $columnCount = $preview ? count($preview['headers']) : 0;
-    $defaultColumns = ['date' => 0, 'amount' => 1];
 @endphp
 
 <x-layouts.app :title="__('ui.bank.import')">
@@ -40,7 +39,7 @@
                 <h2 class="mb-1 font-semibold">{{ __('ui.bank.import_step2') }}</h2>
                 <p class="mb-4 text-sm text-muted">{{ __('ui.bank.import_map_help') }}</p>
 
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ([['date', true], ['amount', true], ['description', false], ['type', false], ['reference', false]] as [$field, $required])
                         <div>
                             <label for="col_{{ $field }}" class="label">{{ __('ui.bank.import_columns.'.$field) }}@if ($required)<span class="text-red-500"> *</span>@endif</label>

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Tenancy\CachePrefixBootstrapper;
 use Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper;
 use Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper;
@@ -38,6 +39,8 @@ return [
      */
     'bootstrappers' => [
         DatabaseTenancyBootstrapper::class,
+        // A cache prefix per company (works with the database store, which has no tags).
+        CachePrefixBootstrapper::class,
         FilesystemTenancyBootstrapper::class,
         QueueTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed

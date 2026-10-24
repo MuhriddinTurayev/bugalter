@@ -14,7 +14,7 @@
     @endif
     @error('staff')<div class="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200">{{ $message }}</div>@enderror
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <x-ui.card padding="p-0" class="lg:col-span-2">
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[38rem]">

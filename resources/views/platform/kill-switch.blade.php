@@ -3,7 +3,7 @@
 <x-layouts.platform :title="__('platform.nav.kill_switch')">
     <x-ui.page-header :title="__('platform.kill_switch.title')" :subtitle="__('platform.kill_switch.subtitle')" />
 
-    <div class="grid max-w-4xl gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 max-w-4xl gap-5 lg:grid-cols-3">
         <x-ui.card class="lg:col-span-2 {{ $on ? 'ring-2 ring-amber-400' : '' }}">
             <div class="flex items-start gap-4">
                 <span @class(['grid size-12 shrink-0 place-items-center rounded-full', 'bg-amber-100 text-amber-700' => $on, 'bg-brand-50 text-brand-600' => ! $on])><x-ui.icon name="power" class="size-6" /></span>
@@ -28,7 +28,7 @@
         <x-ui.card class="self-start">
             <h2 class="mb-2 font-semibold">{{ __('platform.kill_switch.what_title') }}</h2>
             <p class="text-sm text-muted">{{ __('platform.kill_switch.what_text') }}</p>
-            <p class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">{{ __('platform.kill_switch.not_built') }}</p>
+            <p class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">{{ __('platform.kill_switch.autopilot_checks') }}</p>
         </x-ui.card>
     </div>
 </x-layouts.platform>

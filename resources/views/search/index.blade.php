@@ -11,7 +11,7 @@
     @elseif ($contractors->isEmpty() && $documents->isEmpty())
         <x-ui.card><x-ui.empty-state :title="__('ui.search.empty', ['term' => $term])" icon="search" /></x-ui.card>
     @else
-        <div class="grid gap-5 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <x-ui.card padding="p-0">
                 <h2 class="border-b border-line px-5 py-4 font-semibold">{{ __('ui.nav.contractors') }} <span class="text-muted">({{ $contractors->count() }})</span></h2>
                 <ul class="divide-y divide-line">

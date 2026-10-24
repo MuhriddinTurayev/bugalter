@@ -4,7 +4,7 @@
             {{ __('ui.common.pagination_summary', ['from' => $paginator->firstItem(), 'to' => $paginator->lastItem(), 'total' => $paginator->total()]) }}
         </p>
 
-        <div class="flex items-center gap-1">
+        <div class="flex flex-wrap items-center gap-1">
             @if ($paginator->onFirstPage())
                 <span class="grid size-9 place-items-center rounded-full text-muted/40" aria-disabled="true" aria-label="{{ __('ui.common.previous') }}"><x-ui.icon name="chevron-right" class="size-4 rotate-180" /></span>
             @else

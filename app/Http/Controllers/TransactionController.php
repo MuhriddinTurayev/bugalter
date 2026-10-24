@@ -8,6 +8,8 @@ use App\Models\Account;
 use App\Models\Category;
 use App\Models\Contractor;
 use App\Models\Transaction;
+use App\Services\Audit;
+use App\Services\PlanLimits;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,9 +28,11 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function store(TransactionRequest $request): RedirectResponse
+    public function store(TransactionRequest $request, Audit $audit, PlanLimits $limits): RedirectResponse
     {
-        Transaction::create($request->transactionData());
+        $limits->ensure(PlanLimits::TRANSACTIONS);
+        $transaction = Transaction::create($request->transactionData());
+        $audit->record('transaction.created', ['transaction' => $transaction->id, 'type' => $transaction->type->value, 'amount_minor' => $transaction->amount_minor]);
 
         return redirect()->route('bank.index')->with('status', __('ui.bank.transaction_created'));
     }

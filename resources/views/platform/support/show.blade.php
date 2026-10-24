@@ -17,7 +17,7 @@
 
     <x-ui.page-header :title="$company->name" :subtitle="__('platform.support.reason').': '.$session->reason" />
 
-    <div class="mb-5 grid gap-4 sm:grid-cols-3">
+    <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
         @foreach (['documents', 'contractors', 'transactions'] as $key)
             <a href="{{ platform_route('support.show', ['tenant' => $company, 'tab' => $key]) }}" @class(['card block p-5 transition hover:-translate-y-0.5', 'ring-2 ring-ink' => $tab === $key])>
                 <p class="text-xs font-semibold text-muted">{{ __('platform.support.tabs.'.$key) }}</p>

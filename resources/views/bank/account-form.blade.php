@@ -10,7 +10,7 @@
         @if ($editing) @method('PUT') @endif
 
         <x-ui.card>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-ui.input name="name" :label="__('ui.bank.fields.name')" :value="$account->name" required />
                 <div>
                     <label for="type" class="label">{{ __('ui.bank.fields.type') }}</label>
@@ -21,7 +21,7 @@
                     </select>
                 </div>
                 <template x-if="type === 'bank'">
-                    <div class="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+                    <div class="grid grid-cols-1 gap-4 sm:col-span-2 sm:grid-cols-2">
                         <x-ui.input name="bank_name" :label="__('ui.bank.fields.bank_name')" :value="$account->bank_name" />
                         <x-ui.input name="account_number" :label="__('ui.bank.fields.account_number')" :value="$account->account_number" inputmode="numeric" maxlength="20" />
                     </div>

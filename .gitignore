@@ -58,3 +58,6 @@ CLAUDE.local.md
 Thumbs.db
 desktop.ini
 /storage/framework/phpstan
+
+# The Windows desktop agent (agent/)
+/agent/node_modules

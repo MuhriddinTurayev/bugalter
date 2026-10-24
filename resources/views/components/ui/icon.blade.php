@@ -42,6 +42,11 @@
         'lock' => '<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
         'key' => '<circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l3 3M14 9l2 2"/>',
         'power' => '<path d="M12 3v9M6.3 6.8a8 8 0 1 0 11.4 0"/>',
+        'briefcase' => '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7"/><path d="M3 12.5h18"/>',
+        'robot' => '<rect x="4.5" y="8" width="15" height="11" rx="3"/><path d="M12 4v4M9.5 13h.01M14.5 13h.01M9.5 16.5h5"/><circle cx="12" cy="3.5" r="1"/>',
+        'send' => '<path d="m4 12 16-8-6 16-2.5-6.5z"/><path d="m11.5 13.5 4-4"/>',
+        'calculator' => '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5v3M8.5 18h.01M12 18h.01"/>',
+        'signature' => '<path d="M3 17c3-1 4.5-9 7-9 2 0 0 7 2 7 1.5 0 2-3 3.5-3S17 15 21 15"/><path d="M3 21h18"/>',
     ];
 @endphp
 

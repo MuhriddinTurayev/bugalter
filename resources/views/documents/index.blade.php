@@ -9,7 +9,7 @@
     </x-ui.page-header>
 
     <x-ui.card padding="p-0">
-        <form method="get" class="grid gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <form method="get" class="grid grid-cols-1 gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-4">
             <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('ui.documents.search') }}" class="field" aria-label="{{ __('ui.common.search') }}">
             <select name="type" class="field" aria-label="{{ __('ui.documents.fields.type') }}">
                 <option value="">{{ __('ui.documents.all_types') }}</option>

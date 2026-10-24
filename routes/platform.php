@@ -3,6 +3,7 @@
 use App\Http\Controllers\Platform\AuditLogController;
 use App\Http\Controllers\Platform\CompanyController;
 use App\Http\Controllers\Platform\DashboardController;
+use App\Http\Controllers\Platform\IntegrationController;
 use App\Http\Controllers\Platform\KillSwitchController;
 use App\Http\Controllers\Platform\LocaleController;
 use App\Http\Controllers\Platform\LoginController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Platform\ProfileController;
 use App\Http\Controllers\Platform\StaffController;
 use App\Http\Controllers\Platform\StaffInvitationController;
 use App\Http\Controllers\Platform\SupportAccessController;
+use App\Http\Controllers\Platform\TaxRuleController;
 use App\Http\Controllers\Platform\TwoFactorController;
 use App\Support\PlatformUrl;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +58,7 @@ $platformRoutes = function () {
                 Route::post('/companies/{tenant}/suspend', [CompanyController::class, 'suspend'])->name('companies.suspend');
                 Route::post('/companies/{tenant}/restore', [CompanyController::class, 'restore'])->name('companies.restore');
                 Route::post('/companies/{tenant}/invitation', [CompanyController::class, 'resendInvitation'])->name('companies.invitation');
+                Route::patch('/companies/{tenant}/subscription', [CompanyController::class, 'subscription'])->name('companies.subscription');
             });
             Route::get('/companies/{tenant}', [CompanyController::class, 'show'])->name('companies.show');
 
@@ -79,7 +82,26 @@ $platformRoutes = function () {
 
                 Route::get('/kill-switch', [KillSwitchController::class, 'show'])->name('kill-switch');
                 Route::post('/kill-switch', [KillSwitchController::class, 'update'])->name('kill-switch.update');
+
+                // Integrations: AI provider keys, tax authority gateway, signer service
+                Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations');
+                Route::put('/integrations/ai/{provider}', [IntegrationController::class, 'updateAi'])->name('integrations.ai');
+                Route::post('/integrations/ai/{provider}/test', [IntegrationController::class, 'testAi'])->middleware('throttle:10,1')->name('integrations.ai.test');
+                Route::put('/integrations/gateway', [IntegrationController::class, 'updateGateway'])->name('integrations.gateway');
+                Route::put('/integrations/signer', [IntegrationController::class, 'updateSigner'])->name('integrations.signer');
+                Route::put('/integrations/portal', [IntegrationController::class, 'updatePortal'])->name('integrations.portal');
+
+                // Tax rules: correct and verify
+                Route::put('/tax-rules/rules/{rule}', [TaxRuleController::class, 'updateRule'])->name('tax-rules.rule');
+                Route::post('/tax-rules/rules/{rule}/verify', [TaxRuleController::class, 'verifyRule'])->name('tax-rules.rule.verify');
+                Route::put('/tax-rules/deadlines/{deadline}', [TaxRuleController::class, 'updateDeadline'])->name('tax-rules.deadline');
+                Route::post('/tax-rules/deadlines/{deadline}/verify', [TaxRuleController::class, 'verifyDeadline'])->name('tax-rules.deadline.verify');
+                Route::post('/tax-rules/sync', [TaxRuleController::class, 'sync'])->name('tax-rules.sync');
+                Route::post('/tax-rules/verify-all', [TaxRuleController::class, 'verifyAll'])->name('tax-rules.verify-all');
             });
+
+            // Everyone may read the rules
+            Route::get('/tax-rules', [TaxRuleController::class, 'index'])->name('tax-rules');
 
             Route::get('/audit-log', AuditLogController::class)->name('audit');
 

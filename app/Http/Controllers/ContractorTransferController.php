@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\ImportContractors;
 use App\Exports\ContractorsExport;
 use App\Models\Contractor;
+use App\Services\Audit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Excel as ExcelFormat;
@@ -35,6 +36,7 @@ class ContractorTransferController extends Controller
         ]);
 
         $result = $import($request->file('file'));
+        app(Audit::class)->record('contractor.imported', ['created' => $result['created'], 'updated' => $result['updated'], 'errors' => count($result['errors'])]);
 
         return redirect()->route('contractors.index')
             ->with('status', __('ui.contractors.import_done', ['created' => $result['created'], 'updated' => $result['updated']]))

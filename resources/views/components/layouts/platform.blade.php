@@ -10,6 +10,8 @@
         ['label' => __('platform.nav.companies'), 'href' => platform_route('companies.index'), 'icon' => 'building', 'active' => $active('companies.*', 'support.*'), 'show' => true],
         ['label' => __('platform.nav.plans'), 'href' => platform_route('plans.index'), 'icon' => 'receipt', 'active' => $active('plans.*'), 'show' => true],
         ['label' => __('platform.nav.staff'), 'href' => platform_route('staff.index'), 'icon' => 'users', 'active' => $active('staff.*'), 'show' => $staff->isSuperAdmin()],
+        ['label' => __('platform.nav.tax_rules'), 'href' => platform_route('tax-rules'), 'icon' => 'calculator', 'active' => $active('tax-rules*'), 'show' => true],
+        ['label' => __('platform.nav.integrations'), 'href' => platform_route('integrations'), 'icon' => 'link', 'active' => $active('integrations*'), 'show' => $staff->isSuperAdmin()],
         ['label' => __('platform.nav.audit'), 'href' => platform_route('audit'), 'icon' => 'clock', 'active' => $active('audit'), 'show' => true],
         ['label' => __('platform.nav.kill_switch'), 'href' => platform_route('kill-switch'), 'icon' => 'power', 'active' => $active('kill-switch*'), 'show' => $staff->isSuperAdmin()],
     ])->where('show', true)->values();
@@ -52,17 +54,17 @@
                 </span>
             </a>
 
-            <nav class="mx-auto hidden items-center gap-1 rounded-full bg-white/10 p-1 lg:flex" aria-label="{{ __('platform.nav.menu') }}">
+            <nav class="mx-auto hidden min-w-0 items-center gap-0.5 overflow-x-auto rounded-full bg-white/10 p-1 xl:flex" aria-label="{{ __('platform.nav.menu') }}">
                 @foreach ($items as $item)
                     <a href="{{ $item['href'] }}" @class([
-                        'rounded-full px-4 py-2 text-sm font-semibold transition',
+                        'whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition 2xl:px-4',
                         'bg-white text-ink' => $item['active'],
                         'text-white/70 hover:text-white' => ! $item['active'],
                     ]) @if ($item['active']) aria-current="page" @endif>{{ $item['label'] }}</a>
                 @endforeach
             </nav>
 
-            <div class="ml-auto flex items-center gap-2 lg:ml-0">
+            <div class="ml-auto flex items-center gap-2 xl:ml-0">
                 <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
                     <button type="button" class="flex items-center gap-2 rounded-full p-0.5 pr-2 transition hover:bg-white/10" @click="open = !open" :aria-expanded="open" aria-label="{{ __('platform.nav.profile') }}">
                         <x-ui.avatar :text="$staff->initials()" size="size-9" tone="brand" />
@@ -101,7 +103,7 @@
         </div>
 
         {{-- Mobile navigation --}}
-        <nav class="-mx-1 mt-2 flex gap-1 overflow-x-auto px-1 pb-1 lg:hidden" aria-label="{{ __('platform.nav.menu') }}">
+        <nav class="-mx-1 mt-2 flex gap-1 overflow-x-auto px-1 pb-1 xl:hidden" aria-label="{{ __('platform.nav.menu') }}">
             @foreach ($items as $item)
                 <a href="{{ $item['href'] }}" @class([
                     'whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition',

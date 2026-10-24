@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'account_id', 'category_id', 'contractor_id', 'document_id', 'type', 'amount_minor', 'occurred_at',
@@ -43,6 +44,12 @@ class Transaction extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(Document::class);
+    }
+
+    /** @return HasMany<AiProposal, $this> */
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(AiProposal::class, 'subject_id')->where('subject_type', 'transaction');
     }
 
     public function scopeCompleted(Builder $query): Builder

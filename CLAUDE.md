@@ -12,7 +12,7 @@ The AI accountant does the accounting work end to end, but nothing is submitted 
 - `docs/PLAN.md`: the project plan, split into Prompt 0 to Prompt 26.
 - `docs/PROGRESS.md`: progress checklist. Tick a prompt when it is finished.
 - `docs/design/reference.png`: UI design reference (see "UI design" below).
-- `docs/tax/`: source data for the tax rules tables. Seeders read from here.
+- `docs/tax/`: source data for the tax rules tables (`rules.json`, explained in `rules.md`). `TaxRuleSeeder` and `php artisan tax:rules-sync` read from here.
 
 ## Stack
 
@@ -20,7 +20,8 @@ The AI accountant does the accounting work end to end, but nothing is submitted 
 - **Frontend:** Blade + Alpine.js + Tailwind CSS, bundled with Vite. Chart.js for charts. No Livewire, no Vue, no React.
 - **Database:** MySQL 8 with `utf8mb4`.
 - **Multi-tenancy:** `stancl/tenancy`, one database per tenant.
-- **Roles and permissions:** `spatie/laravel-permission`.
+- **Roles and permissions:** the `Role` enum plus `App\Enums\Permission` (role defaults and owner grants in `user_permissions`), checked through Gates.
+- **AI providers:** ChatGPT, Gemini and DeepSeek through their OpenAI-compatible Chat Completions APIs (Laravel HTTP client); Claude through the official `anthropic-ai/sdk`.
 - **Authentication and 2FA:** Laravel Fortify.
 - **Background work:** Laravel queues on Redis, Laravel scheduler.
 - **Documents:** `barryvdh/laravel-dompdf` for PDF, `maatwebsite/excel` for Excel.
@@ -53,6 +54,7 @@ Packages are added in the prompt that first needs them, so not all of them are i
 - Tax calculations are done only by deterministic PHP code using a versioned rules table.
 - Never invent tax rates or deadlines and never hardcode them. Read them from the rules tables, which are seeded from `docs/tax/`.
 - If a rate or deadline you need is not in `docs/tax/`, stop and ask instead of guessing.
+- The values in `docs/tax/rules.json` were filled in from the Tax Code and are `needs_verification` until an accountant verifies them in the platform panel. Calculations show an "unverified" badge; the `rules_verified` gate blocks autopilot/mandate submissions until then. Change a value only with a new `effective_from` row, never in code.
 
 ### AI accountant
 
@@ -92,7 +94,7 @@ Then tick the prompt in `docs/PROGRESS.md`.
 
 ## Local environment
 
-The project runs under OSPanel with the PHP-8.4 module (`.osp/project.ini`). The `php` on the system PATH is 8.1, which is too old for this project. Use `D:\OSPanel\OSPanel\modules\PHP-8.4\php.exe` and `composer.bat` from the same folder, or the OSPanel console for this project.
+The project runs under OSPanel with the PHP-8.4 module (`.osp/project.ini`) and the MySQL-8.4 module. Use OSPanel's `modules\PHP-8.4\php.exe` (on this machine `C:\backend\OSPanel\modules\PHP-8.4`, set `COMPOSER_HOME=C:\backend\OSPanel\data\PHP-8.4\default\composer` for its `composer.bat`), or the OSPanel console for this project. Do not use another PHP on the PATH.
 
 ## UI design
 

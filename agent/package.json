@@ -1,0 +1,21 @@
+{
+  "name": "bugalter-desktop-agent",
+  "private": true,
+  "description": "Local Windows agent: drives the official Soliq cabinet in a real browser with the official E-IMZO app, for one Bugalter company.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "setup": "node src/cli.js setup",
+    "start": "node src/cli.js run",
+    "doctor": "node src/cli.js doctor",
+    "inspect": "node src/cli.js inspect",
+    "discover": "node src/cli.js discover",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
+    "reporting": "node src/cli.js reporting"
+  },
+  "dependencies": {
+    "playwright-core": "1.64.1"
+  }
+}

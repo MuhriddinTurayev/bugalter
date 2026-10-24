@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ContractorType;
 use App\Http\Requests\ContractorRequest;
 use App\Models\Contractor;
+use App\Services\Audit;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,9 +38,10 @@ class ContractorController extends Controller
         return view('contractors.form', ['contractor' => new Contractor(['type' => ContractorType::Customer])]);
     }
 
-    public function store(ContractorRequest $request): RedirectResponse
+    public function store(ContractorRequest $request, Audit $audit): RedirectResponse
     {
-        Contractor::create($request->validated());
+        $contractor = Contractor::create($request->validated());
+        $audit->record('contractor.created', ['contractor' => $contractor->id, 'name' => $contractor->name]);
 
         return redirect()->route('contractors.index')->with('status', __('ui.contractors.created'));
     }
@@ -51,19 +53,21 @@ class ContractorController extends Controller
         return view('contractors.form', compact('contractor'));
     }
 
-    public function update(ContractorRequest $request, Contractor $contractor): RedirectResponse
+    public function update(ContractorRequest $request, Contractor $contractor, Audit $audit): RedirectResponse
     {
         $contractor->update($request->validated());
+        $audit->record('contractor.updated', ['contractor' => $contractor->id, 'name' => $contractor->name, 'changed' => array_keys($contractor->getChanges())]);
 
         return redirect()->route('contractors.index')->with('status', __('ui.contractors.updated'));
     }
 
     /** Deactivate or reactivate; contractors with documents are never deleted. */
-    public function toggle(Contractor $contractor): RedirectResponse
+    public function toggle(Contractor $contractor, Audit $audit): RedirectResponse
     {
         $this->authorize('toggle', $contractor);
 
         $contractor->update(['is_active' => ! $contractor->is_active]);
+        $audit->record($contractor->is_active ? 'contractor.activated' : 'contractor.deactivated', ['contractor' => $contractor->id, 'name' => $contractor->name]);
 
         return back()->with('status', __($contractor->is_active ? 'ui.contractors.activated' : 'ui.contractors.deactivated'));
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Middleware\AuthenticateDesktopAgent;
 use App\Models\Account;
 use App\Models\CompanySetting;
 use App\Models\Contractor;
@@ -137,6 +138,8 @@ it('is reachable through the single protected route group only', function () {
         ->filter(fn ($route) => ! in_array('auth', $route->gatherMiddleware(), true) && ! in_array('guest', $route->gatherMiddleware(), true))
         // Platform routes are protected by their own guard and 2FA middleware (see PlatformSecurityTest).
         ->reject(fn ($route) => str_starts_with((string) $route->getName(), 'platform.'))
+        // The desktop agent's API has no session: it is allowed only with its token middleware on every route.
+        ->reject(fn ($route) => str_starts_with((string) $route->getName(), 'agent-api.') && in_array(AuthenticateDesktopAgent::class, $route->gatherMiddleware(), true))
         ->map(fn ($route) => $route->uri())
         ->reject(fn (string $uri) => in_array($uri, ['up', 'locale/{locale}', 'storage/{path}'], true))
         ->values()

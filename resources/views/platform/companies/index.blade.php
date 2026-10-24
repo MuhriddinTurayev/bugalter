@@ -10,7 +10,7 @@
     </x-ui.page-header>
 
     <x-ui.card padding="p-0">
-        <form method="get" class="grid gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[1fr_11rem_11rem_auto]">
+        <form method="get" class="grid grid-cols-1 gap-3 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[1fr_11rem_11rem_auto]">
             <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('platform.companies.search') }}" class="field" aria-label="{{ __('platform.common.search') }}">
             <select name="status" class="field" aria-label="{{ __('platform.companies.fields.status') }}">
                 <option value="">{{ __('platform.companies.all_statuses') }}</option>

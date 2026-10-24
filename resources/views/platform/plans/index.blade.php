@@ -10,9 +10,9 @@
     @if ($plans->isEmpty())
         <x-ui.card><x-ui.empty-state :title="__('platform.plans.empty')" icon="receipt" /></x-ui.card>
     @else
-        <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             @foreach ($plans as $plan)
-                <x-ui.card @class(['opacity-60' => ! $plan->is_active])>
+                <x-ui.card :class="$plan->is_active ? '' : 'opacity-60'">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <p class="text-lg font-semibold">{{ $plan->name }}</p>

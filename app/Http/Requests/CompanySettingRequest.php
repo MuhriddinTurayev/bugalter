@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TaxRegime;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CompanySettingRequest extends FormRequest
 {
@@ -20,6 +22,9 @@ class CompanySettingRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'legal_form' => ['nullable', 'string', 'max:30'],
             'stir' => ['nullable', 'regex:/^\d{9}$/'],
+            'pinfl' => ['nullable', 'regex:/^\d{14}$/'],
+            'tax_region' => ['nullable', 'string', 'max:60'],
+            'tax_district' => ['nullable', 'string', 'max:60'],
             'address' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -31,6 +36,8 @@ class CompanySettingRequest extends FormRequest
             'vat_payer' => ['boolean'],
             'vat_registration_code' => ['nullable', 'string', 'max:20'],
             'default_vat_percent' => ['nullable', 'regex:/^\d{1,2}([.,]\d{1,2})?$/'],
+            'tax_regime' => ['sometimes', Rule::enum(TaxRegime::class)],
+            'is_budget_org' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -46,6 +53,7 @@ class CompanySettingRequest extends FormRequest
     {
         return [
             'stir.regex' => __('ui.settings.errors.stir'),
+            'pinfl.regex' => __('ui.settings.errors.pinfl'),
             'bank_account.regex' => __('ui.contractors.errors.bank_account'),
             'mfo.regex' => __('ui.contractors.errors.mfo'),
         ];
@@ -60,6 +68,10 @@ class CompanySettingRequest extends FormRequest
         unset($data['default_vat_percent']);
 
         $data['vat_payer'] = $this->boolean('vat_payer');
+
+        if ($this->has('is_budget_org')) {
+            $data['is_budget_org'] = $this->boolean('is_budget_org');
+        }
         $data['default_vat_rate_bp'] = $percent === ''
             ? 0
             : BigDecimal::of($percent)->multipliedBy(100)->toScale(0, RoundingMode::HalfUp)->toInt();

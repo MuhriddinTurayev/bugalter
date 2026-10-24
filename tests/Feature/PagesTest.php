@@ -8,6 +8,7 @@ use App\Models\Contractor;
 use App\Models\Document;
 use App\Models\Employee;
 use App\Models\Transaction;
+use Database\Seeders\TaxRuleSeeder;
 
 use function Pest\Laravel\get;
 use function Pest\Laravel\getJson;
@@ -34,7 +35,8 @@ it('renders the dashboard with every card endpoint wired', function () {
         ->assertSee(__('ui.dashboard.receivables.title'))
         ->assertSee(__('ui.dashboard.tax.title'))
         ->assertSee(__('ui.dashboard.ai.title'))
-        ->assertSee(__('ui.common.coming_soon'))
+        ->assertSee(route('ai.index'))
+        ->assertSee(__('ui.dashboard.ai.not_configured'))
         ->assertSee('dashboard\/cards\/balance', false)
         ->assertSee('dashboard\/cards\/receivables', false)
         ->assertSee(__('ui.dashboard.new_document'));
@@ -100,9 +102,11 @@ it('renders the management pages for roles that may use them', function () {
 it('shows a clear state instead of tax figures while tax rules are not loaded', function () {
     signIn(Role::ChiefAccountant);
 
-    $loaded = is_file(base_path('docs/tax/rules.md'));
+    get('/reports')->assertOk()->assertSee(__('ui.reports.tax_missing_title'));
 
-    get('/reports')->assertOk()->assertSee(__($loaded ? 'ui.reports.tax_ready_title' : 'ui.reports.tax_missing_title'));
+    app(TaxRuleSeeder::class)->sync();
+
+    get('/reports')->assertOk()->assertSee(__('ui.reports.tax_ready_title'))->assertSee(route('tax.index'));
 });
 
 it('summarises income and expense on the reports page', function () {
@@ -134,4 +138,12 @@ it('renders the PDF of a document with a font that has Uzbek and Cyrillic glyphs
     expect($response->headers->get('content-type'))->toBe('application/pdf')
         ->and($response->headers->get('content-disposition'))->toContain('INV-2026-0001.pdf')
         ->and($response->getContent())->toStartWith('%PDF');
+});
+
+it('writes relative dates in Latin Uzbek, not Carbon\'s Cyrillic "uz"', function () {
+    app()->setLocale('uz');
+    expect(now()->subMinutes(4)->diffForHumans())->toBe('4 daqiqa avval');
+
+    app()->setLocale('ru');
+    expect(now()->subMinutes(4)->diffForHumans())->toBe('4 минуты назад');
 });

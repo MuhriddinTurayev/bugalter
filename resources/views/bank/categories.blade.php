@@ -5,8 +5,8 @@
         <x-slot:actions><x-ui.button :href="route('bank.index')" variant="secondary">{{ __('ui.common.back') }}</x-ui.button></x-slot:actions>
     </x-ui.page-header>
 
-    <div class="grid gap-5 lg:grid-cols-3">
-        <div class="grid gap-5 sm:grid-cols-2 lg:col-span-2">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:col-span-2">
             @foreach (TransactionType::cases() as $type)
                 <x-ui.card padding="p-0">
                     <h2 class="border-b border-line px-5 py-4 font-semibold">{{ $type->label() }}</h2>

@@ -37,7 +37,7 @@
     </x-ui.page-header>
 
     <x-ui.card padding="p-0">
-        <form method="get" class="grid gap-3 border-b border-line p-4 sm:grid-cols-[1fr_11rem_11rem_auto]">
+        <form method="get" class="grid grid-cols-1 gap-3 border-b border-line p-4 sm:grid-cols-[1fr_11rem_11rem_auto]">
             <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('ui.contractors.search') }}" class="field" aria-label="{{ __('ui.common.search') }}">
             <select name="type" class="field" aria-label="{{ __('ui.contractors.fields.type') }}">
                 <option value="">{{ __('ui.contractors.all_types') }}</option>

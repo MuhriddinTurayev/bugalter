@@ -9,18 +9,29 @@
         ['key' => 'documents', 'route' => 'documents.index', 'match' => 'documents.*', 'icon' => 'document', 'label' => __('ui.nav.documents'), 'show' => true],
         ['key' => 'bank', 'route' => 'bank.index', 'match' => 'bank.*', 'icon' => 'wallet', 'label' => __('ui.nav.bank'), 'show' => true],
         ['key' => 'contractors', 'route' => 'contractors.index', 'match' => 'contractors.*', 'icon' => 'users', 'label' => __('ui.nav.contractors'), 'show' => true],
+        ['key' => 'tax', 'route' => 'tax.index', 'match' => 'tax.*', 'icon' => 'calculator', 'label' => __('ui.nav.tax'), 'show' => $user->can('view-reports')],
+        ['key' => 'payroll', 'route' => 'payroll.index', 'match' => 'payroll.*', 'icon' => 'briefcase', 'label' => __('ui.nav.payroll'), 'show' => $user->can('view-employees')],
         ['key' => 'reports', 'route' => 'reports', 'match' => 'reports', 'icon' => 'chart', 'label' => __('ui.nav.reports'), 'show' => $user->can('view-reports')],
         ['key' => 'history', 'route' => 'history', 'match' => 'history', 'icon' => 'clock', 'label' => __('ui.nav.history'), 'show' => true],
+        ['key' => 'ai', 'route' => 'ai.index', 'match' => 'ai.*', 'icon' => 'sparkles', 'label' => __('ui.nav.ai'), 'show' => true],
     ])->where('show', true)->map(fn (array $i) => $i + ['active' => request()->routeIs($i['match']), 'href' => route($i['route'])])->values();
 
-    $pill = collect(['home', 'documents', 'reports', 'history', 'contractors'])
+    $pill = collect(['home', 'documents', 'bank', 'tax', 'reports', 'ai'])
         ->map(fn (string $key) => $items->firstWhere('key', $key))
         ->filter();
     $railTop = $items->whereIn('key', ['home', 'documents', 'bank', 'contractors']);
-    $railMid = $items->whereIn('key', ['reports', 'history']);
+    $railMid = $items->whereIn('key', ['tax', 'payroll', 'reports', 'history']);
+    $railAi = $items->whereIn('key', ['ai']);
+    // The phone bar has room for five; the rest are in the profile menu.
+    $mobile = $items->whereIn('key', ['home', 'documents', 'bank', 'tax', 'ai'])->take(5);
+    $more = $items->whereNotIn('key', $mobile->pluck('key'));
 
     $unread = $user->unreadNotifications()->latest()->limit(8)->get();
     $unreadCount = $user->unreadNotifications()->count();
+
+    $limits = app(\App\Services\PlanLimits::class);
+    $subscriptionExpired = $limits->isSubscriptionExpired();
+    $autopilotPaused = $company->settings()->isAutopilotPaused();
 @endphp
 
 <!DOCTYPE html>
@@ -33,6 +44,15 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen">
+@if ($subscriptionExpired)
+    <div class="bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white" role="alert">{{ __('ui.limits.subscription_banner') }}</div>
+@endif
+@if ($autopilotPaused)
+    <div class="bg-amber-500 px-4 py-2 text-center text-sm font-semibold text-ink" role="status">
+        <x-ui.icon name="pause" class="mr-1 inline size-4" /> {{ __('autopilot.paused_banner') }}
+        @can('autopilot.manage')<a href="{{ route('autopilot.show') }}" class="ml-1 underline">{{ __('autopilot.open') }}</a>@endcan
+    </div>
+@endif
 <div class="mx-auto max-w-[1520px] px-3 pt-3 sm:px-6 sm:pt-5 lg:px-8">
 
     {{-- Top bar --}}
@@ -48,7 +68,7 @@
             @foreach ($pill as $item)
                 <a href="{{ $item['href'] }}"
                    @class([
-                       'rounded-full px-5 py-2 text-sm font-semibold transition',
+                       'whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition',
                        'bg-white text-ink shadow-sm' => $item['active'],
                        'text-muted hover:text-ink' => ! $item['active'],
                    ])
@@ -119,11 +139,17 @@
                         </div>
                     </div>
                     <div class="border-t border-line pt-1">
+                        @foreach ($more as $item)
+                            <a href="{{ $item['href'] }}" class="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm transition hover:bg-soft lg:hidden"><x-ui.icon :name="$item['icon']" class="size-4 text-muted" /> {{ $item['label'] }}</a>
+                        @endforeach
+                        @can('autopilot.manage')
+                            <a href="{{ route('autopilot.show') }}" class="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm transition hover:bg-soft"><x-ui.icon name="shield" class="size-4 text-muted" /> {{ __('ui.nav.autopilot') }}</a>
+                        @endcan
+                        @can('signing.keys.manage')
+                            <a href="{{ route('signing-keys.index') }}" class="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm transition hover:bg-soft"><x-ui.icon name="key" class="size-4 text-muted" /> {{ __('ui.nav.signing_keys') }}</a>
+                        @endcan
                         @can('manage-settings')
                             <a href="{{ route('settings.company') }}" class="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm transition hover:bg-soft"><x-ui.icon name="cog" class="size-4 text-muted" /> {{ __('ui.nav.settings') }}</a>
-                        @endcan
-                        @can('view-reports')
-                            <a href="{{ route('reports') }}" class="flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm transition hover:bg-soft lg:hidden"><x-ui.icon name="chart" class="size-4 text-muted" /> {{ __('ui.nav.reports') }}</a>
                         @endcan
                         <form method="post" action="{{ route('logout') }}">@csrf
                             <button class="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm transition hover:bg-soft"><x-ui.icon name="logout" class="size-4 text-muted" /> {{ __('ui.nav.logout') }}</button>
@@ -138,7 +164,7 @@
         {{-- Icon rail --}}
         <aside class="sticky top-5 hidden h-[calc(100vh-8.5rem)] w-[4.5rem] shrink-0 flex-col justify-between self-start lg:flex">
             <div class="space-y-4">
-                @foreach ([$railTop, $railMid] as $group)
+                @foreach (array_filter([$railTop, $railMid, $railAi], fn ($group) => $group->isNotEmpty()) as $group)
                     <nav class="flex flex-col items-center gap-2 rounded-full bg-white p-2 shadow-card" aria-label="{{ __('ui.nav.menu') }}">
                         @foreach ($group as $item)
                             <a href="{{ $item['href'] }}" title="{{ $item['label'] }}" aria-label="{{ $item['label'] }}"
@@ -155,6 +181,14 @@
                 @endforeach
             </div>
             <div class="flex flex-col items-center gap-2 rounded-full bg-white p-2 shadow-card">
+                @can('autopilot.manage')
+                    <a href="{{ route('autopilot.show') }}" title="{{ __('ui.nav.autopilot') }}" aria-label="{{ __('ui.nav.autopilot') }}"
+                       @class([
+                           'grid size-12 place-items-center rounded-full transition',
+                           'bg-brand-600 text-white' => request()->routeIs('autopilot.*', 'signing-keys.*'),
+                           'text-muted hover:bg-soft hover:text-ink' => ! request()->routeIs('autopilot.*', 'signing-keys.*'),
+                       ])><x-ui.icon name="shield" class="size-[22px]" /></a>
+                @endcan
                 @can('manage-settings')
                     <a href="{{ route('settings.company') }}" title="{{ __('ui.nav.settings') }}" aria-label="{{ __('ui.nav.settings') }}"
                        @class([
@@ -179,7 +213,7 @@
 {{-- Mobile bottom navigation --}}
 <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="{{ __('ui.nav.menu') }}">
     <ul class="mx-auto flex max-w-md items-stretch justify-between">
-        @foreach ($items as $item)
+        @foreach ($mobile as $item)
             <li class="flex-1">
                 <a href="{{ $item['href'] }}" @class([
                     'flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold transition',

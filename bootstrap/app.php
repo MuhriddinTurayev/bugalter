@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticateDesktopAgent;
 use App\Http\Middleware\CompanyContext;
 use App\Http\Middleware\PlatformAuthenticate;
 use App\Http\Middleware\PlatformPathFallbackOnly;
@@ -12,12 +13,19 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        // The desktop agent's API: the company comes from the host (CompanyContext), the computer from its token.
+        then: fn () => Route::middleware([CompanyContext::class, 'throttle:120,1', AuthenticateDesktopAgent::class, SubstituteBindings::class])
+            ->prefix('api/agent')
+            ->name('agent-api.')
+            ->group(base_path('routes/agent.php')),
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Order matters: the platform session settings and the company (tenancy) context must be

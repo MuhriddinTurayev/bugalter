@@ -13,7 +13,7 @@
 
         <x-ui.card>
             <h2 class="mb-4 font-semibold">{{ __('platform.companies.company') }}</h2>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
                     <label for="name" class="label">{{ __('platform.companies.fields.name') }}<span class="text-red-500"> *</span></label>
                     <input id="name" name="name" class="field {{ $errors->has('name') ? 'field-invalid' : '' }}" x-model="name" @input="suggest()" required maxlength="255">
@@ -44,7 +44,7 @@
         <x-ui.card>
             <h2 class="mb-1 font-semibold">{{ __('platform.companies.owner') }}</h2>
             <p class="mb-4 text-sm text-muted">{{ __('platform.companies.owner_hint') }}</p>
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-ui.input class="sm:col-span-2" name="owner_name" :label="__('platform.companies.fields.owner_name')" required />
                 <x-ui.input name="owner_email" type="email" :label="__('platform.companies.fields.owner_email')" required />
                 <x-ui.input name="owner_phone" type="tel" :label="__('platform.companies.fields.owner_phone')" />

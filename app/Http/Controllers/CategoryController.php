@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\TransactionType;
 use App\Models\Category;
+use App\Services\Audit;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,8 @@ class CategoryController extends Controller
             'type' => __('ui.bank.fields.type'),
         ]);
 
-        Category::create($data);
+        $category = Category::create($data);
+        app(Audit::class)->record('category.created', ['category' => $category->id, 'name' => $category->name]);
 
         return back()->with('status', __('ui.bank.category_created'));
     }
@@ -43,6 +45,7 @@ class CategoryController extends Controller
         $this->authorize('update', $category);
 
         $category->update(['is_active' => ! $category->is_active]);
+        app(Audit::class)->record($category->is_active ? 'category.activated' : 'category.deactivated', ['category' => $category->id, 'name' => $category->label()]);
 
         return back()->with('status', __('ui.bank.category_updated'));
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\DeleteDraftDocument;
 use App\Actions\SaveDocument;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentType;
@@ -9,7 +10,9 @@ use App\Http\Requests\DocumentRequest;
 use App\Models\Account;
 use App\Models\Contractor;
 use App\Models\Document;
+use App\Services\Audit;
 use App\Services\CurrentCompany;
+use App\Services\PlanLimits;
 use App\Support\Money;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -61,9 +64,11 @@ class DocumentController extends Controller
         return view('documents.form', $this->formData($document, $company));
     }
 
-    public function store(DocumentRequest $request, SaveDocument $save): RedirectResponse
+    public function store(DocumentRequest $request, SaveDocument $save, PlanLimits $limits): RedirectResponse
     {
+        $limits->ensure(PlanLimits::DOCUMENTS);
         $document = $save($request->documentData(), $request->user());
+        app(Audit::class)->record('document.created', ['document' => $document->number, 'total_minor' => $document->total_minor]);
 
         return redirect()->route('documents.show', $document)->with('status', __('ui.documents.created'));
     }
@@ -88,17 +93,18 @@ class DocumentController extends Controller
     public function update(DocumentRequest $request, Document $document, SaveDocument $save): RedirectResponse
     {
         $save($request->documentData(), $request->user(), $document);
+        app(Audit::class)->record('document.updated', ['document' => $document->number, 'total_minor' => $document->total_minor]);
 
         return redirect()->route('documents.show', $document)->with('status', __('ui.documents.updated'));
     }
 
-    public function destroy(Document $document): RedirectResponse
+    public function destroy(Document $document, DeleteDraftDocument $delete): RedirectResponse
     {
         $this->authorize('delete', $document);
 
-        $document->delete();
+        $result = $delete($document);
 
-        return redirect()->route('documents.index')->with('status', __('ui.documents.deleted'));
+        return redirect()->route('documents.index')->with('status', __($result === 'deleted' ? 'ui.documents.deleted' : 'ui.documents.number_kept'));
     }
 
     /** @return array<string, mixed> */

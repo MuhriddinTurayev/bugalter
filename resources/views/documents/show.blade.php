@@ -17,7 +17,7 @@
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <div class="space-y-5 lg:col-span-2">
             <x-ui.card padding="p-0">
                 <div class="overflow-x-auto">

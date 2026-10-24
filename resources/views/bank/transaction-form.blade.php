@@ -17,7 +17,7 @@
                 @endforeach
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-ui.input name="amount" inputmode="decimal" :label="__('ui.bank.fields.amount').' ('.__('ui.currency.uzs').')'" placeholder="0" required />
                 <x-ui.input name="occurred_on" type="date" :label="__('ui.bank.fields.date')" :value="now()->toDateString()" max="{{ now()->toDateString() }}" required />
                 <x-ui.select name="account_id" :label="__('ui.bank.fields.account')" required>
