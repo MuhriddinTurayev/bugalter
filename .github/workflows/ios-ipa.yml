@@ -1,0 +1,52 @@
+name: Build iOS IPA
+
+# Builds the Bugalter mobile app for iOS on a GitHub macOS runner and uploads an .ipa file.
+# The file is NOT signed (no Apple certificate is stored here): it cannot be installed as it is.
+# Sign and install it with your own Apple ID (AltStore, Sideloadly) or sign it with a developer certificate.
+
+on:
+  push:
+    branches: [ios-build]
+    paths: ['mobile/**', '.github/workflows/ios-ipa.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Packages
+        run: flutter pub get
+
+      - name: Tests
+        run: flutter test
+
+      - name: Build (no code signing)
+        run: flutter build ios --release --no-codesign
+
+      - name: Pack the .ipa
+        run: |
+          rm -rf ipa && mkdir -p ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app ipa/Payload/Runner.app
+          (cd ipa && zip -qr Bugalter-unsigned.ipa Payload)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bugalter-ios-unsigned-ipa
+          path: mobile/ipa/Bugalter-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30

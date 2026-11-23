@@ -1,0 +1,134 @@
+{
+    "$comment": "Source data for the tax rules tables (TaxRuleSeeder). Every value was filled in from the Tax Code of the Republic of Uzbekistan (2020 edition with amendments) as known when it was written, and is marked needs_verification until an accountant checks it against the current law and marks it verified in the platform panel. Autopilot and mandate submissions are blocked while any rule they use is unverified. Rates are in basis points (1200 = 12%), amounts in tiyin (1 so'm = 100 tiyin).",
+    "version": 1,
+    "rates": [
+        {
+            "code": "vat.standard",
+            "kind": "rate",
+            "value": 1200,
+            "effective_from": "2023-01-01",
+            "effective_to": null,
+            "name": {"uz": "QQS umumiy stavkasi", "ru": "Общая ставка НДС"},
+            "source": "Soliq kodeksi, 258-modda (2023-yil 1-yanvardan 12%)"
+        },
+        {
+            "code": "vat.zero",
+            "kind": "rate",
+            "value": 0,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "name": {"uz": "QQS nol stavkasi (eksport)", "ru": "Нулевая ставка НДС (экспорт)"},
+            "source": "Soliq kodeksi, 259-modda"
+        },
+        {
+            "code": "vat.registration_threshold",
+            "kind": "amount",
+            "value": 100000000000,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "name": {"uz": "QQS toʻlovchiga oʻtish chegarasi (yillik aylanma)", "ru": "Порог перехода на НДС (годовой оборот)"},
+            "source": "Soliq kodeksi, 462-modda (1 mlrd soʻm)"
+        },
+        {
+            "code": "turnover.general",
+            "kind": "rate",
+            "value": 400,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "name": {"uz": "Aylanmadan olinadigan soliq (umumiy stavka)", "ru": "Налог с оборота (общая ставка)"},
+            "source": "Soliq kodeksi, 467-modda"
+        },
+        {
+            "code": "profit.general",
+            "kind": "rate",
+            "value": 1500,
+            "effective_from": "2019-01-01",
+            "effective_to": null,
+            "name": {"uz": "Foyda soligʻi (umumiy stavka)", "ru": "Налог на прибыль (общая ставка)"},
+            "source": "Soliq kodeksi, 337-modda"
+        },
+        {
+            "code": "pit.standard",
+            "kind": "rate",
+            "value": 1200,
+            "effective_from": "2019-01-01",
+            "effective_to": null,
+            "name": {"uz": "Jismoniy shaxslardan olinadigan daromad soligʻi (JShDS)", "ru": "Налог на доходы физических лиц (НДФЛ)"},
+            "source": "Soliq kodeksi, 381-modda"
+        },
+        {
+            "code": "inps.employee",
+            "kind": "rate",
+            "value": 10,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "name": {"uz": "INPS (jamgʻarib boriladigan pensiya badali, JShDS ichidan)", "ru": "ИНПС (накопительный пенсионный взнос, из суммы НДФЛ)"},
+            "source": "Fuqarolarning jamgʻarib boriladigan pensiya taʼminoti toʻgʻrisidagi qonun; badal JShDS summasidan ushlanadi"
+        },
+        {
+            "code": "social.general",
+            "kind": "rate",
+            "value": 1200,
+            "effective_from": "2019-01-01",
+            "effective_to": null,
+            "name": {"uz": "Ijtimoiy soliq (umumiy)", "ru": "Социальный налог (общий)"},
+            "source": "Soliq kodeksi, 405-modda"
+        },
+        {
+            "code": "social.budget",
+            "kind": "rate",
+            "value": 2500,
+            "effective_from": "2019-01-01",
+            "effective_to": null,
+            "name": {"uz": "Ijtimoiy soliq (budjet tashkilotlari)", "ru": "Социальный налог (бюджетные организации)"},
+            "source": "Soliq kodeksi, 405-modda"
+        },
+        {
+            "code": "dividend.resident",
+            "kind": "rate",
+            "value": 500,
+            "effective_from": "2019-01-01",
+            "effective_to": null,
+            "name": {"uz": "Dividendlarga soliq (rezident)", "ru": "Налог на дивиденды (резидент)"},
+            "source": "Soliq kodeksi, 337-modda"
+        }
+    ],
+    "deadlines": [
+        {
+            "report_type": "vat",
+            "period": "month",
+            "months_after": 1,
+            "day": 20,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "source": "Soliq kodeksi, 263-modda: QQS hisob-kitobi hisobot oyidan keyingi oyning 20-sanasidan kechiktirmay"
+        },
+        {
+            "report_type": "turnover",
+            "period": "quarter",
+            "months_after": 1,
+            "day": 15,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "source": "Soliq kodeksi, 468-modda: hisobot choragidan keyingi oyning 15-sanasidan kechiktirmay"
+        },
+        {
+            "report_type": "profit",
+            "period": "quarter",
+            "months_after": 1,
+            "day": 20,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "source": "Soliq kodeksi, 343-modda: choraklik hisob-kitob hisobot davridan keyingi oyning 20-sanasidan kechiktirmay"
+        },
+        {
+            "report_type": "payroll",
+            "period": "month",
+            "months_after": 1,
+            "day": 15,
+            "effective_from": "2020-01-01",
+            "effective_to": null,
+            "source": "Soliq kodeksi, 390 va 408-moddalar: JShDS va ijtimoiy soliq hisob-kitobi keyingi oyning 15-sanasidan kechiktirmay"
+        }
+    ]
+}
