@@ -62,6 +62,21 @@ class ApiClient {
 
   Future<Map<String, dynamic>> delete(String path) => _send('DELETE', path);
 
+  /// A file (the PDF of a letter): the bytes of the answer.
+  Future<List<int>> getBytes(String path) async {
+    http.Response r;
+    try {
+      final req = http.Request('GET', Uri.parse('$baseUrl$path'))..headers.addAll({..._headers, 'Accept': '*/*'});
+      r = await http.Response.fromStream(await req.send().timeout(const Duration(seconds: 90)));
+    } on TimeoutException {
+      throw ApiException(0, 'timeout');
+    } catch (_) {
+      throw ApiException(0, 'network');
+    }
+    if (r.statusCode >= 200 && r.statusCode < 300) return r.bodyBytes;
+    throw ApiException(r.statusCode, switch (r.statusCode) { 401 => 'unauthenticated', 403 => 'forbidden', 404 => 'not_found', 429 => 'throttled', _ => 'server' });
+  }
+
   /// Any method by name (used by the queue of changes).
   Future<Map<String, dynamic>> send(String method, String path, [Map<String, dynamic>? body]) => _send(method, path, body);
 
@@ -98,7 +113,8 @@ class ApiClient {
           _ => 'server',
         };
     // the first validation message, else the server's message
-    String? message = json['message'] as String?;
+    // a throttle's "Too Many Attempts." is not a message for a person: the app says it in its own words
+    String? message = r.statusCode == 429 ? null : json['message'] as String?;
     final errors = json['errors'];
     if (errors is Map && errors.isNotEmpty) {
       final first = errors.values.first;

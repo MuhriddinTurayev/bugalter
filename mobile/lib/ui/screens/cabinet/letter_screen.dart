@@ -4,7 +4,10 @@ import 'package:flutter/services.dart';
 import '../../../core/scope.dart';
 import '../../../core/theme.dart';
 import '../../../data/cabinet.dart';
+import '../../../data/server_modules.dart';
+import '../../../data/store.dart';
 import '../../widgets/glass.dart';
+import '../agent/translate_card.dart';
 import 'cabinet_common.dart';
 import 'payments_screen.dart';
 
@@ -19,6 +22,12 @@ class LetterScreen extends StatefulWidget {
 }
 
 class _LetterScreenState extends State<LetterScreen> {
+  /// Has the server kept the original PDF of this letter?
+  bool _hasPdf(AppStore s, int id) {
+    final rows = serverPart(s, 'letters')?['letters'];
+    return rows is List && rows.any((e) => e is Map && e['id'] == id && e['hasPdf'] == true);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -114,7 +123,16 @@ class _LetterScreenState extends State<LetterScreen> {
               ]),
             ),
           ),
-          if (translated && (live ? (l.body['orig'] ?? '').isNotEmpty && l.body['orig'] != bodyText : bodyText.isNotEmpty)) ...[
+          if (live) ...[
+            const SizedBox(height: 14),
+            TranslateCard(
+              kind: 'letters',
+              id: l.id,
+              done: summary != null && summary.isNotEmpty && (locale == 'uz' || translated),
+              pdfName: _hasPdf(s, l.id) ? 'letter-${l.number.isEmpty ? l.id : l.number}.pdf' : null,
+            ),
+          ],
+          if (translated && (live ? (l.body['orig'] ?? '').isNotEmpty && l.body["orig"] != bodyText : bodyText.isNotEmpty)) ...[
             const SizedBox(height: 14),
             Reveal(
               index: 3,

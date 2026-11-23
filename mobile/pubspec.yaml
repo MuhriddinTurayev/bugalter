@@ -16,6 +16,8 @@ dependencies:
   speech_to_text: ^7.5.0
   flutter_tts: ^4.2.5
   http: ^1.6.0
+  open_filex: ^5.0.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

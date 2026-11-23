@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../agent/translate_card.dart';
+
 import '../../../core/money.dart';
 import '../../../core/scope.dart';
 import '../../../core/theme.dart';
@@ -253,6 +255,14 @@ class _DidoxDocScreenState extends State<DidoxDocScreen> {
               ],
             ]),
           ),
+          if (d.live && d.body.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            TranslateCard(
+              kind: 'didox',
+              id: d.id,
+              done: aiSummary != null && aiSummary.isNotEmpty && (locale == d.bodyLang || translated != null),
+            ),
+          ],
           if (aiSummary != null && aiSummary.isNotEmpty) ...[
             const SizedBox(height: 14),
             GlassCard(

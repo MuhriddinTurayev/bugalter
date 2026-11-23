@@ -7,6 +7,7 @@ import '../../../data/cabinet.dart';
 import '../../../data/models.dart';
 import '../../widgets/glass.dart';
 import 'cabinet_common.dart';
+import 'live_payments_screen.dart';
 
 /// Tax payments: what the cabinet says is owed, what was paid, and the payments started here.
 ///
@@ -125,7 +126,9 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     final d = CabinetData.of(s);
     final gate = cabGate(context, title: context.t('nav.tax_payments'), synced: d.synced, allowed: d.canSeeCabinet);
     if (gate != null) return gate;
-    final live = d.live; // the real company: the payments are only shown, they are made on the web platform
+    final live = d.live;
+    // the real company has its own screen: the same rules as the web (what is due, one payment, all, take back), the robot pays in the cabinet
+    if (live) return const LivePaymentsScreen();
     final canPay = !live && s.role.canApprove;
     final balances = d.balances;
     final debts = balances.where((b) => b.debt > 0).toList();

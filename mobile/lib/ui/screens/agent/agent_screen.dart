@@ -6,6 +6,7 @@ import '../../../core/scope.dart';
 import '../../../core/theme.dart';
 import '../../../data/api.dart';
 import '../../widgets/glass.dart';
+import 'agent_actions.dart';
 
 /// The company's computer agent: what the robot on the accountant's computer is doing right now, the steps it took and what it read in the tax
 /// cabinet and Didox. Read from the server and refreshed while this page is open. The two buttons only ask the robot to READ again; signing, paying
@@ -70,7 +71,7 @@ class _AgentScreenState extends State<AgentScreen> {
       final r = await store.serverRequest('POST', path);
       message = r['message'] as String? ?? context.t('agent.refreshed');
     } on ApiException catch (e) {
-      message = e.message ?? context.t(e.status == 403 ? 'agent.no_right' : (e.network ? 'srv.err_network' : 'agent.check_failed'));
+      message = apiErrorText(context, e);
     }
     if (!mounted) return;
     setState(() {
@@ -79,6 +80,13 @@ class _AgentScreenState extends State<AgentScreen> {
     });
     context.toast(message);
     await _load();
+  }
+
+  /// "Stop": takes the task back so the cabinet or Didox can be checked again.
+  Future<void> _stop(int id) async {
+    final yes = await confirmDialog(context, title: context.t('agent.stop'), message: context.t('agent.stop_confirm'), danger: true, confirmLabel: context.t('agent.stop'));
+    if (!yes || !mounted) return;
+    await _ask('/api/mobile/agent/tasks/$id/cancel');
   }
 
   Color _tone(Glass g, String? tone) => switch (tone) {
@@ -160,6 +168,10 @@ class _AgentScreenState extends State<AgentScreen> {
                 const SizedBox(height: 6),
                 for (final x in steps) _Step(time: '${x['time']}', text: '${x['text']}'),
               ],
+              if (canRun && active && tasks.any((t) => t['id'] == live['id'] && t['cancellable'] == true)) ...[
+                const SizedBox(height: 12),
+                AppButton(label: context.t('agent.stop'), icon: Icons.stop_circle_outlined, kind: ButtonKind.danger, compact: true, onPressed: _busy ? null : () => _stop((live['id'] as num).toInt())),
+              ],
             ]),
           ),
           const SizedBox(height: 14),
@@ -240,7 +252,7 @@ class _AgentScreenState extends State<AgentScreen> {
       onTap: () => setState(() => open ? _open.remove(id) : _open.add(id)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Expanded(child: Text('${t['typeLabel']}', style: TextStyle(color: g.text, fontWeight: FontWeight.w800, fontSize: 15))),
+          Expanded(child: Text(t['type'] == 'pay' ? context.t('agent.type_pay') : '${t['typeLabel']}', style: TextStyle(color: g.text, fontWeight: FontWeight.w800, fontSize: 15))),
           StatusPill(label: '${t['statusLabel']}', color: color),
           const SizedBox(width: 4),
           Icon(open ? Icons.expand_less_rounded : Icons.expand_more_rounded, color: g.textDim),
@@ -253,7 +265,12 @@ class _AgentScreenState extends State<AgentScreen> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(context.t('agent.seen', {'reports': seen['reports'] ?? 0, 'accepted': seen['accepted'] ?? 0, 'todo': seen['todo'] ?? 0}), style: TextStyle(color: g.text, fontSize: 13.5, height: 1.3)),
           ),
-        if (t['error'] != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('${t['error']}', style: TextStyle(color: g.danger, fontSize: 13, height: 1.3))),
+        if (t['error'] != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text('${t['error']}', style: TextStyle(color: t['status'] == 'failed' ? g.danger : g.textDim, fontSize: 13, height: 1.3))),
+        if (t['cancellable'] == true && (_data?['canRun'] == true))
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Align(alignment: Alignment.centerRight, child: AppButton(label: context.t('agent.stop'), icon: Icons.stop_circle_outlined, kind: ButtonKind.danger, compact: true, expanded: false, onPressed: _busy ? null : () => _stop(id))),
+          ),
         if (open) ...[
           const SizedBox(height: 10),
           if ('${t['actor']}'.isNotEmpty) Text(context.t('agent.by', {'name': '${t['actor']}'}), style: TextStyle(color: g.textDim, fontSize: 12.5)),

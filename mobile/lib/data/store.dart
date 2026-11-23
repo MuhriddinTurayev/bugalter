@@ -363,6 +363,17 @@ class AppStore extends ChangeNotifier {
     }
   }
 
+  /// A file of the company's server (the PDF of a letter).
+  Future<List<int>> serverBytes(String path) async {
+    if (!serverMode) throw ApiException(0, 'network');
+    try {
+      return await ApiClient(serverUrl, token: _token, lang: locale).getBytes(path);
+    } on ApiException catch (e) {
+      if (e.unauthorized) await _expire();
+      rethrow;
+    }
+  }
+
   /// How many changes still wait for the network.
   int get pending => outbox.length;
 

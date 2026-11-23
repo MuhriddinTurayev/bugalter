@@ -704,6 +704,8 @@ Future<bool> confirmDialog(BuildContext context, {required String title, String?
               color: Colors.transparent,
               child: GlassCard(
                 strong: true,
+                // a solid sheet: a see-through question over a busy page cannot be read
+                tint: g.dark ? const Color(0xFF0E1B2C) : const Color(0xFFF4F8F8),
                 padding: const EdgeInsets.all(22),
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Text(title, style: TextStyle(color: g.text, fontSize: 18, fontWeight: FontWeight.w800)),
