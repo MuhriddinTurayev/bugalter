@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
+import '../l10n/strings.dart';
 import 'extras.dart';
 import 'models.dart';
 import 'seed.dart';
@@ -351,6 +352,17 @@ class AppStore extends ChangeNotifier {
     unawaited(_pump());
   }
 
+  /// One call to the company's server by the screens (the agent panel, "check" buttons). Throws [ApiException]; a token that is no longer valid signs the person out.
+  Future<Map<String, dynamic>> serverRequest(String method, String path, [Map<String, dynamic>? body]) async {
+    if (!serverMode) throw ApiException(0, 'network');
+    try {
+      return await ApiClient(serverUrl, token: _token, lang: locale).send(method, path, body);
+    } on ApiException catch (e) {
+      if (e.unauthorized) await _expire();
+      rethrow;
+    }
+  }
+
   /// How many changes still wait for the network.
   int get pending => outbox.length;
 
@@ -359,7 +371,7 @@ class AppStore extends ChangeNotifier {
     if (_pumping || !serverMode || outbox.isEmpty) return;
     _pumping = true;
     _retry?.cancel();
-    final api = ApiClient(serverUrl, token: _token);
+    final api = ApiClient(serverUrl, token: _token, lang: locale);
     var expired = false;
     try {
       while (outbox.isNotEmpty && serverMode) {
@@ -446,7 +458,7 @@ class AppStore extends ChangeNotifier {
     syncError = null;
     notifyListeners();
     try {
-      final api = ApiClient(serverUrl, token: _token);
+      final api = ApiClient(serverUrl, token: _token, lang: locale);
       final snap = await api.get('/api/mobile/sync');
       final extras = <String, dynamic>{};
       await Future.wait([
@@ -541,10 +553,23 @@ class AppStore extends ChangeNotifier {
       final n = older['${a.id}'];
       if (n is num) a.openingMinor += n.toInt();
     }
+    _labelAccounts();
+  }
+
+  /// An account that is only called by its kind (the server may store a translation key such as "ui.account_types.cash")
+  /// is shown by the name of its kind in the language of the phone.
+  void _labelAccounts() {
+    final i = kLocales.indexOf(locale).clamp(0, 2);
+    for (final a in accounts) {
+      final names = kAllStrings['bank.type_${a.type.name}'];
+      if (names == null) continue;
+      if (a.name.startsWith('ui.') || names.contains(a.name)) a.name = names[i];
+    }
   }
 
   Future<void> setLocale(String code) async {
     locale = code;
+    if (serverMode) _labelAccounts();
     await _prefs.setString('locale', code);
     notifyListeners();
   }

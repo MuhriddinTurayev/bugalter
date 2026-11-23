@@ -23,10 +23,13 @@ class ApiException implements Exception {
 
 /// The company's server (a Laravel application): JSON over HTTPS with the token made at sign-in. Money is whole tiyin, dates are the company's own time.
 class ApiClient {
-  ApiClient(this.baseUrl, {this.token});
+  ApiClient(this.baseUrl, {this.token, this.lang});
 
   final String baseUrl;
   String? token;
+
+  /// The language of the app (uz, ru, tg): the server writes its own texts (the agent's steps, refusals) in it.
+  final String? lang;
 
   static const _timeout = Duration(seconds: 40);
 
@@ -46,6 +49,7 @@ class ApiClient {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
+        if (lang != null) 'Accept-Language': lang!,
       };
 
   Future<Map<String, dynamic>> get(String path) => _send('GET', path);

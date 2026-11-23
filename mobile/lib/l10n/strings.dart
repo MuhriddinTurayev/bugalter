@@ -1,3 +1,4 @@
+import 'strings_agent.dart';
 import 'strings_bank.dart';
 import 'strings_cabinet.dart';
 import 'strings_extra.dart';
@@ -20,6 +21,7 @@ final Map<String, List<String>> kAllStrings = {
   ...kStringsCabinet,
   ...kStringsLegal,
   ...kStringsExtra,
+  ...kStringsAgent,
 };
 
 /// Looks a string up. A missing key shows the key itself (and is caught by the string-table test).

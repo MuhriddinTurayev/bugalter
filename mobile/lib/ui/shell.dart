@@ -43,21 +43,14 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMixin {
+class _HomeShellState extends State<HomeShell> {
   TabId _tab = TabId.home;
-  late final AnimationController _fade = AnimationController(vsync: this, duration: const Duration(milliseconds: 420), value: 1);
   final _pages = <TabId, Widget>{};
-
-  @override
-  void dispose() {
-    _fade.dispose();
-    super.dispose();
-  }
+  final _visited = <TabId>{TabId.home};
 
   void _go(TabId t) {
     if (t == _tab) return;
     setState(() => _tab = t);
-    _fade.forward(from: 0);
   }
 
   Widget _page(TabId t) => _pages.putIfAbsent(t, () {
@@ -89,14 +82,9 @@ class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMix
       });
     }
     final wide = context.isWide;
-    final body = FadeTransition(
-      opacity: CurvedAnimation(parent: _fade, curve: Curves.easeOut),
-      child: AnimatedBuilder(
-        animation: _fade,
-        builder: (context, child) => Transform.translate(offset: Offset(0, (1 - _fade.value) * 14), child: child),
-        child: IndexedStack(index: tabs.indexOf(_tab), children: [for (final t in tabs) _page(t)]),
-      ),
-    );
+    // A tab is built the first time it is opened and then kept (so it keeps its scroll place); no fade or slide between tabs.
+    _visited.add(_tab);
+    final body = IndexedStack(index: tabs.indexOf(_tab), children: [for (final t in tabs) _visited.contains(t) ? _page(t) : const SizedBox.shrink()]);
 
     return PopScope(
       canPop: _tab == TabId.home,
@@ -205,19 +193,13 @@ class _Header extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(context.isWide ? 28 : 16, 10, context.isWide ? 28 : 16, 8),
         child: Row(children: [
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              layoutBuilder: (current, previous) => Stack(alignment: Alignment.centerLeft, children: [...previous, ?current]),
-              transitionBuilder: (c, a) => FadeTransition(opacity: a, child: SlideTransition(position: Tween(begin: const Offset(0, .25), end: Offset.zero).animate(a), child: c)),
-              child: Column(
-                key: ValueKey('$tab${s.locale}${s.user?.id}'),
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: g.textDim, fontSize: 13.5, fontWeight: FontWeight.w600)),
-                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: g.text, fontSize: 25, fontWeight: FontWeight.w900, letterSpacing: -.6)),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: g.textDim, fontSize: 13.5, fontWeight: FontWeight.w600)),
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: g.text, fontSize: 25, fontWeight: FontWeight.w900, letterSpacing: -.6)),
+              ],
             ),
           ),
           const SizedBox(width: 8),
@@ -249,7 +231,7 @@ class _BottomBar extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
             child: DecoratedBox(
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(32), boxShadow: [BoxShadow(color: g.shadow, blurRadius: 16, offset: const Offset(0, 6), spreadRadius: -4)]),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(32)),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(32),
                 child: DecoratedBox(
@@ -261,8 +243,8 @@ class _BottomBar extends StatelessWidget {
                       final w = c.maxWidth / tabs.length;
                       return Stack(children: [
                         AnimatedPositioned(
-                          duration: const Duration(milliseconds: 380),
-                          curve: Curves.easeOutBack,
+                          duration: const Duration(milliseconds: 160),
+                          curve: Curves.easeOut,
                           left: w * i + 6,
                           top: 6,
                           bottom: 6,

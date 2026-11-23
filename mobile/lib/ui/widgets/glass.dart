@@ -166,40 +166,16 @@ class _PressScaleState extends State<PressScale> {
 }
 
 /// Fades and slides its child in when first shown; [index] staggers a list.
-class Reveal extends StatefulWidget {
+/// Kept as a wrapper so every page keeps its order, but it does NOT animate: fading and sliding every card in made weak phones stutter (each one was
+/// its own animation and its own offscreen layer). The content is simply shown.
+class Reveal extends StatelessWidget {
   const Reveal({super.key, required this.child, this.index = 0, this.dy = 18});
   final Widget child;
   final int index;
   final double dy;
 
   @override
-  State<Reveal> createState() => _RevealState();
-}
-
-class _RevealState extends State<Reveal> with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
-  late final Animation<double> _a;
-
-  @override
-  void initState() {
-    super.initState();
-    final delay = math.min(widget.index, 10) * 55;
-    _c = AnimationController(vsync: this, duration: Duration(milliseconds: 520 + delay))..forward();
-    _a = CurvedAnimation(parent: _c, curve: Interval(delay / (520 + delay), 1, curve: Curves.easeOutCubic));
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-        animation: _a,
-        builder: (context, child) => Opacity(opacity: _a.value, child: Transform.translate(offset: Offset(0, (1 - _a.value) * widget.dy), child: child)),
-        child: widget.child,
-      );
+  Widget build(BuildContext context) => child;
 }
 
 /// Animates a number from its previous value to the new one.
@@ -210,12 +186,8 @@ class CountUp extends StatelessWidget {
   final Duration duration;
 
   @override
-  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        tween: Tween(end: value.toDouble()),
-        duration: duration,
-        curve: Curves.easeOutCubic,
-        builder: (c, v, _) => builder(c, v.round()),
-      );
+  // the number is shown at once (counting up redrew the card for a second on every page)
+  Widget build(BuildContext context) => builder(context, value);
 }
 
 // ───────────────────────── glass surfaces ─────────────────────────
@@ -264,10 +236,6 @@ class GlassCard extends StatelessWidget {
     if (blur) {
       body = ClipRRect(borderRadius: br, child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20), child: body));
     }
-    body = DecoratedBox(
-      decoration: BoxDecoration(borderRadius: br, boxShadow: [BoxShadow(color: g.shadow, blurRadius: 14, offset: const Offset(0, 6), spreadRadius: -4)]),
-      child: body,
-    );
     if (onTap != null || onLongPress != null) body = PressScale(onTap: onTap, onLongPress: onLongPress, child: body);
     return margin == null ? body : Padding(padding: margin!, child: body);
   }
@@ -674,14 +642,11 @@ class PageScaffold extends StatelessWidget {
 }
 
 /// Opens a page with a fade + slide transition.
+/// Opens a page at once, without a sliding or fading transition (the transitions made weak phones drop frames).
 Future<T?> pushPage<T>(BuildContext context, Widget page) => Navigator.of(context).push<T>(PageRouteBuilder<T>(
-      transitionDuration: const Duration(milliseconds: 380),
-      reverseTransitionDuration: const Duration(milliseconds: 280),
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
       pageBuilder: (_, __, ___) => page,
-      transitionsBuilder: (_, a, __, child) {
-        final curved = CurvedAnimation(parent: a, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
-        return FadeTransition(opacity: curved, child: SlideTransition(position: Tween(begin: const Offset(.06, 0), end: Offset.zero).animate(curved), child: child));
-      },
     ));
 
 // ───────────────────────── sheets & dialogs ─────────────────────────
@@ -700,21 +665,19 @@ Future<T?> showGlassSheet<T>(BuildContext context, {required WidgetBuilder build
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
         child: ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
-            child: Container(
-              decoration: BoxDecoration(
-                color: g.dark ? const Color(0xCC0E1B2C) : const Color(0xE6F4F8F8),
-                border: Border(top: BorderSide(color: g.border)),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const SizedBox(height: 10),
-                  Container(width: 42, height: 4, decoration: BoxDecoration(color: g.textDim.withValues(alpha: .5), borderRadius: BorderRadius.circular(2))),
-                  Flexible(child: scroll ? SingleChildScrollView(padding: const EdgeInsets.fromLTRB(20, 14, 20, 20), child: builder(ctx)) : builder(ctx)),
-                ]),
-              ),
+          // a plain, nearly solid sheet: a live blur of the whole screen behind it is too heavy for weak phones
+          child: Container(
+            decoration: BoxDecoration(
+              color: g.dark ? const Color(0xF20E1B2C) : const Color(0xF5F4F8F8),
+              border: Border(top: BorderSide(color: g.border)),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const SizedBox(height: 10),
+                Container(width: 42, height: 4, decoration: BoxDecoration(color: g.textDim.withValues(alpha: .5), borderRadius: BorderRadius.circular(2))),
+                Flexible(child: scroll ? SingleChildScrollView(padding: const EdgeInsets.fromLTRB(20, 14, 20, 20), child: builder(ctx)) : builder(ctx)),
+              ]),
             ),
           ),
         ),
@@ -729,7 +692,7 @@ Future<bool> confirmDialog(BuildContext context, {required String title, String?
     barrierDismissible: true,
     barrierLabel: 'dialog',
     barrierColor: Colors.black.withValues(alpha: .5),
-    transitionDuration: const Duration(milliseconds: 260),
+    transitionDuration: const Duration(milliseconds: 120),
     pageBuilder: (ctx, _, __) {
       final g = ctx.g;
       return Center(

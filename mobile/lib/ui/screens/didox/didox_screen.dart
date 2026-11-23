@@ -4,6 +4,8 @@ import '../../../core/scope.dart';
 import '../../../core/theme.dart';
 import '../../../data/legal.dart';
 import '../../widgets/glass.dart';
+import '../agent/agent_actions.dart';
+import '../agent/agent_screen.dart';
 import '../legal/legal_common.dart';
 import '../server_gate.dart';
 import 'didox_doc_screen.dart';
@@ -79,7 +81,7 @@ class _DidoxScreenState extends State<DidoxScreen> {
       actions: [
         GlassIconButton(icon: Icons.refresh_rounded, tooltip: context.t('didox.refresh'), onTap: () async {
           if (live) {
-            // the real company: read the server again
+            // the real company: read the server again (what the robot has read so far)
             final st = context.readStore;
             await st.syncNow();
             if (context.mounted) context.toast(context.t(st.syncError == null ? 'srv.synced_ok' : (st.offline ? 'srv.err_network' : 'srv.err_server')));
@@ -102,6 +104,14 @@ class _DidoxScreenState extends State<DidoxScreen> {
               Expanded(child: Text(context.t(live ? 'didox.live_note' : 'didox.sandbox_note'), style: TextStyle(color: g.textDim, fontSize: 12.5, height: 1.3))),
             ]),
           ),
+          if (live) ...[
+            const SizedBox(height: 12),
+            if (canAskAgent(context)) ...[
+              const AgentAskButton(path: '/api/mobile/agent/didox-check', label: 'agent.check_didox', icon: Icons.smart_toy_rounded),
+              const SizedBox(height: 8),
+            ],
+            AppButton(label: context.t('agent.open_panel'), icon: Icons.visibility_rounded, kind: ButtonKind.glass, onPressed: () => pushPage(context, const AgentScreen())),
+          ],
           const SizedBox(height: 16),
           if (waiting.isNotEmpty) ...[
             TileSection(

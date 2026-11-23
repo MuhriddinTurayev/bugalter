@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bugalter_mobile/l10n/strings.dart';
+import 'package:bugalter_mobile/l10n/strings_agent.dart';
 import 'package:bugalter_mobile/l10n/strings_bank.dart';
 import 'package:bugalter_mobile/l10n/strings_cabinet.dart';
 import 'package:bugalter_mobile/l10n/strings_extra.dart';
@@ -33,7 +34,7 @@ void main() {
   });
 
   test('no key is defined in two string files', () {
-    final total = kStringsCommon.length + kStringsDocs.length + kStringsBank.length + kStringsTax.length + kStringsCabinet.length + kStringsLegal.length + kStringsExtra.length;
+    final total = kStringsCommon.length + kStringsDocs.length + kStringsBank.length + kStringsTax.length + kStringsCabinet.length + kStringsLegal.length + kStringsExtra.length + kStringsAgent.length;
     expect(kAllStrings.length, total, reason: 'a key is duplicated between string files');
   });
 

@@ -9,6 +9,8 @@ import '../../widgets/glass.dart';
 import '../tax/tax_common.dart';
 import 'cabinet_common.dart';
 import 'letter_screen.dart';
+import '../agent/agent_actions.dart';
+import '../agent/agent_screen.dart';
 import 'letters_screen.dart';
 import 'payments_screen.dart';
 import 'runs_screen.dart';
@@ -96,6 +98,14 @@ class _CabinetScreenState extends State<CabinetScreen> {
                 if (!live) ...[
                   const SizedBox(height: 14),
                   AppButton(label: context.t(_checking ? 'cab.checking' : 'cab.check_now'), icon: Icons.manage_search_rounded, loading: _checking, onPressed: _check),
+                ],
+                if (live && canAskAgent(context)) ...[
+                  const SizedBox(height: 14),
+                  const AgentAskButton(path: '/api/mobile/agent/check', label: 'agent.check_cabinet', icon: Icons.smart_toy_rounded),
+                ],
+                if (live) ...[
+                  const SizedBox(height: 8),
+                  AppButton(label: context.t('agent.open_panel'), icon: Icons.visibility_rounded, kind: ButtonKind.glass, onPressed: () => pushPage(context, const AgentScreen())),
                 ],
               ]),
             ),

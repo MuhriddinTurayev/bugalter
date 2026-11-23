@@ -5,6 +5,7 @@ import '../../../core/theme.dart';
 import '../../../data/models.dart';
 import '../../../l10n/strings.dart';
 import '../../widgets/glass.dart';
+import '../agent/agent_screen.dart';
 import '../ai/ai_screen.dart';
 import '../ai/proposals_screen.dart';
 import '../bank/import_screen.dart';
@@ -51,6 +52,7 @@ class MoreTab extends StatelessWidget {
             (Icons.description_rounded, 'nav.didox', g.accent2, const DidoxScreen()),
             (Icons.gavel_rounded, 'nav.legal', g.accent, const LegalScreen()),
             (Icons.auto_mode_rounded, 'nav.runs', g.info, const RunsScreen()),
+            (Icons.smart_toy_rounded, 'nav.agent', g.success, const AgentScreen()),
           ],
         ),
       (

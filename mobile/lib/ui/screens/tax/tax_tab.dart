@@ -6,6 +6,7 @@ import '../../../core/theme.dart';
 import '../../../data/models.dart';
 import '../../../data/tax.dart';
 import '../../widgets/glass.dart';
+import '../agent/agent_screen.dart';
 import '../cabinet/cabinet_screen.dart';
 import '../cabinet/letters_screen.dart';
 import '../cabinet/payments_screen.dart';
@@ -62,6 +63,7 @@ class TaxTab extends StatelessWidget {
               (Icons.description_rounded, 'nav.didox', g.accent2, const DidoxScreen()),
               (Icons.gavel_rounded, 'nav.legal', g.accent, const LegalScreen()),
               (Icons.auto_mode_rounded, 'nav.runs', g.info, const RunsScreen()),
+              (Icons.smart_toy_rounded, 'nav.agent', g.success, const AgentScreen()),
             ])
               SoftTile(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

@@ -59,7 +59,7 @@ class _BarsChartState extends State<BarsChart> {
             child: TweenAnimationBuilder<double>(
               key: ValueKey(widget.groups.length),
               tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 900),
+              duration: Duration.zero,
               curve: Curves.easeOutCubic,
               builder: (context, p, _) => CustomPaint(
                 size: Size(c.maxWidth, widget.height),
@@ -138,7 +138,7 @@ class AreaChart extends StatelessWidget {
         builder: (context, c) => TweenAnimationBuilder<double>(
           key: ValueKey(values.join(',')),
           tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 1100),
+          duration: Duration.zero,
           curve: Curves.easeOutCubic,
           builder: (context, p, _) => CustomPaint(size: Size(c.maxWidth, height), painter: _AreaPainter(values, labels, p, color ?? g.accent, g)),
         ),
@@ -211,7 +211,7 @@ class DonutChart extends StatelessWidget {
         TweenAnimationBuilder<double>(
           key: ValueKey(slices.map((e) => e.value).join(',')),
           tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 1000),
+          duration: Duration.zero,
           curve: Curves.easeOutCubic,
           builder: (context, p, _) => CustomPaint(size: Size.square(size), painter: _DonutPainter(slices, p, context.g)),
         ),
@@ -267,7 +267,7 @@ class MeterBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: TweenAnimationBuilder<double>(
           tween: Tween(end: fraction.clamp(0, 1).toDouble()),
-          duration: const Duration(milliseconds: 800),
+          duration: Duration.zero,
           curve: Curves.easeOutCubic,
           builder: (context, v, _) => FractionallySizedBox(widthFactor: v, child: DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(colors: [c, c.withValues(alpha: .6)])))),
         ),
