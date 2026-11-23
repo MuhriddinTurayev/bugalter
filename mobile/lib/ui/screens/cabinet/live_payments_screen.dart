@@ -84,6 +84,7 @@ class _LivePaymentsScreenState extends State<LivePaymentsScreen> {
       final r = await store.serverRequest('POST', path, body);
       message = r['message'] as String? ?? context.t('agent.refreshed');
       ok = true;
+      store.watchAgent();
     } on ApiException catch (e) {
       message = apiErrorText(context, e);
     }

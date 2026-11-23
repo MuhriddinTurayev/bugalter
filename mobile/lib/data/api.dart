@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' show MediaType;
 
 /// What went wrong talking to the server. [status] is 0 when the server could not be reached at all.
 class ApiException implements Exception {
@@ -62,6 +63,23 @@ class ApiClient {
 
   Future<Map<String, dynamic>> delete(String path) => _send('DELETE', path);
 
+  /// Uploads one file (a recording of the microphone) and returns the JSON answer.
+  Future<Map<String, dynamic>> postFile(String path, String field, List<int> bytes, String fileName, String contentType) async {
+    late http.Response r;
+    try {
+      final parts = contentType.split('/');
+      final req = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'))
+        ..headers.addAll({..._headers}..remove('Content-Type'))
+        ..files.add(http.MultipartFile.fromBytes(field, bytes, filename: fileName, contentType: MediaType(parts.first, parts.last)));
+      r = await http.Response.fromStream(await req.send().timeout(const Duration(seconds: 90)));
+    } on TimeoutException {
+      throw ApiException(0, 'timeout');
+    } catch (_) {
+      throw ApiException(0, 'network');
+    }
+    return _decode(r);
+  }
+
   /// A file (the PDF of a letter): the bytes of the answer.
   Future<List<int>> getBytes(String path) async {
     http.Response r;
@@ -94,6 +112,11 @@ class ApiClient {
       throw ApiException(0, 'network');
     }
 
+    return _decode(r);
+  }
+
+  /// The JSON of an answer when it is a success; an [ApiException] with the server's reason otherwise.
+  Map<String, dynamic> _decode(http.Response r) {
     Map<String, dynamic> json = const {};
     try {
       final d = jsonDecode(utf8.decode(r.bodyBytes));

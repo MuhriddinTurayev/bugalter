@@ -25,6 +25,7 @@ import '../reports/reports_screen.dart';
 import '../settings/company_screen.dart';
 import '../settings/keys_screen.dart';
 import '../settings/profile_screen.dart';
+import '../settings/sessions_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/users_screen.dart';
 
@@ -82,6 +83,7 @@ class MoreTab extends StatelessWidget {
           if (tax) (Icons.apartment_rounded, 'nav.company', g.info, const CompanyScreen()),
           if (s.role.canManagePeople) (Icons.admin_panel_settings_rounded, 'nav.users', g.danger, const UsersScreen()),
           if (tax) (Icons.vpn_key_rounded, 'nav.eri', g.warning, const SigningKeysScreen()),
+          if (s.serverMode) (Icons.devices_rounded, 'nav.sessions', g.info, const SessionsScreen()),
           (Icons.settings_rounded, 'nav.settings', g.accent2, const SettingsScreen()),
         ],
       ),

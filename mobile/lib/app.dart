@@ -42,6 +42,8 @@ class _BugalterAppState extends State<BugalterApp> with WidgetsBindingObserver {
     } else {
       // back in the app: read the real company again when the copy on the phone has got old
       widget.store.syncIfStale();
+      widget.store.resumeAi();
+      widget.store.watchAgent(window: Duration.zero);
     }
   }
 

@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart' show ChangeNotifier, TargetPlatform, debugPrint, defaultTargetPlatform;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
 import '../l10n/strings.dart';
 import 'extras.dart';
 import 'models.dart';
+import 'notifier.dart';
 import 'seed.dart';
 import 'tax.dart';
 
@@ -100,6 +102,23 @@ class AppStore extends ChangeNotifier {
   final Map<String, dynamic> ext = {};
   int _seq = 1000;
 
+  // ── the real assistant and the news from the server (they live in the store, not on a page, so they go on when a page is closed) ──
+  /// Questions sent to the assistant whose answers have not come yet: {ticket, at}.
+  final List<Map<String, dynamic>> aiPending = [];
+  int? aiConversation;
+
+  /// True while the chat page is open (then an answer needs no notification).
+  bool aiChatOpen = false;
+  Timer? _aiTimer;
+  bool _aiPolling = false;
+
+  /// What the server told the person: the assistant answered, the robot finished or waits. Newest first: {id, kind, a, at}.
+  final List<Map<String, dynamic>> serverNotices = [];
+  final Map<int, String> _taskStatus = {};
+  bool _agentSeeded = false, _agentDenied = false, _agentBusy = false;
+  Timer? _agentTimer;
+  DateTime? _agentWatchUntil;
+
   static Future<AppStore> open() async {
     final prefs = await SharedPreferences.getInstance();
     final store = AppStore(prefs, await TaxRuleBook.load());
@@ -164,7 +183,15 @@ class AppStore extends ChangeNotifier {
       _idMap
         ..clear()
         ..addAll(((j['idMap'] as Map?) ?? const {}).map((k, v) => MapEntry(int.parse('$k'), (v as num).toInt())));
+      aiPending
+        ..clear()
+        ..addAll((j['aiPending'] as List? ?? const []).map((e) => Map<String, dynamic>.from(e as Map)));
+      aiConversation = j['aiConv'] as int?;
+      serverNotices
+        ..clear()
+        ..addAll((j['sn'] as List? ?? const []).map((e) => Map<String, dynamic>.from(e as Map)));
       if (serverMode && outbox.isNotEmpty) Future<void>.microtask(_pump);
+      if (serverMode && aiPending.isNotEmpty) Future<void>.microtask(_ensureAiPoll);
     } catch (e) {
       debugPrint('Stored data could not be read, reseeding: $e');
       if (serverMode) {
@@ -194,6 +221,16 @@ class AppStore extends ChangeNotifier {
     outbox.clear();
     _idMap.clear();
     _retry?.cancel();
+    aiPending.clear();
+    aiConversation = null;
+    serverNotices.clear();
+    _taskStatus.clear();
+    _agentSeeded = false;
+    _agentDenied = false;
+    _aiTimer?.cancel();
+    _aiTimer = null;
+    _agentTimer?.cancel();
+    _agentTimer = null;
   }
 
   void _readOnly() {
@@ -230,6 +267,9 @@ class AppStore extends ChangeNotifier {
       'permissions': permissions.toList(),
       'outbox': outbox,
       'idMap': _idMap.map((k, v) => MapEntry('$k', v)),
+      'aiPending': aiPending,
+      'aiConv': aiConversation,
+      'sn': serverNotices,
     };
     await _prefs.setString(_dbKey, jsonEncode(j));
   }
@@ -290,7 +330,7 @@ class AppStore extends ChangeNotifier {
     final base = ApiClient.resolve(address, serverDomain);
     if (base.isEmpty) throw ApiException(404, 'not_found');
     final api = ApiClient(base);
-    final res = await api.post('/api/mobile/login', {'login': login.trim(), 'password': password});
+    final res = await api.post('/api/mobile/login', {'login': login.trim(), 'password': password, ...await _deviceInfo()});
 
     _token = res['token'] as String;
     serverUrl = base;
@@ -303,11 +343,20 @@ class AppStore extends ChangeNotifier {
     await _prefs.setInt('user', currentUserId!);
     await syncNow();
     if (!serverMode) throw ApiException(401, 'unauthenticated');
+    // the first time: ask the phone for the right to show notifications (the answers of the AI, the end of the robot's checks)
+    unawaited(Notifier.requestPermission());
   }
 
   /// Signs out of the server and back to the demo company; the copy of the real company is wiped from the phone.
   Future<void> disconnectServer() async {
     _saveTimer?.cancel();
+    if (serverMode && _token != null) {
+      try {
+        await ApiClient(serverUrl, token: _token).send('POST', '/api/mobile/logout').timeout(const Duration(seconds: 6));
+      } catch (_) {
+        // no network: the sign-in is forgotten on the phone; the person can end it from another place
+      }
+    }
     _forgetServer();
     _clearData();
     _load();
@@ -350,6 +399,24 @@ class AppStore extends ChangeNotifier {
     outbox.add({'m': method, 'p': path, 'b': body, 'id': id});
     _persist();
     unawaited(_pump());
+  }
+
+  /// What this phone calls itself, shown in the list of places where the person is signed in.
+  Future<Map<String, String>> _deviceInfo() async {
+    try {
+      final plugin = DeviceInfoPlugin();
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final i = await plugin.androidInfo;
+        return {'device': '${i.manufacturer} ${i.model}'.trim(), 'platform': 'android'};
+      }
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final i = await plugin.iosInfo;
+        return {'device': i.name.isNotEmpty ? i.name : i.model, 'platform': 'ios'};
+      }
+    } catch (_) {
+      // an unknown phone is still a phone
+    }
+    return const {};
   }
 
   /// One call to the company's server by the screens (the agent panel, "check" buttons). Throws [ApiException]; a token that is no longer valid signs the person out.
@@ -487,6 +554,8 @@ class AppStore extends ChangeNotifier {
       lastSync = DateTime.now();
       await _prefs.setString('srv.last', lastSync!.toIso8601String());
       offline = false;
+      _ensureAiPoll();
+      watchAgent(window: Duration.zero);
     } on ApiException catch (e) {
       if (e.unauthorized) {
         // the token is no longer valid (expired, password changed, person switched off)
@@ -1056,6 +1125,9 @@ class AppStore extends ChangeNotifier {
     if (employees.isNotEmpty && payrollFor(prev) == null && role.canSeeTax) {
       out.add(AppNotice('payroll:${prev.year}-${prev.month}', 'payroll', {'month': '${prev.month}'}, thisMonth));
     }
+    for (final n in serverNotices) {
+      out.add(AppNotice('${n['id']}', '${n['kind']}', {for (final e in (n['a'] as Map? ?? const {}).entries) '${e.key}': '${e.value}'}, DateTime.tryParse('${n['at']}') ?? d));
+    }
     out.sort((a, b) => b.at.compareTo(a.at));
     return out;
   }
@@ -1076,6 +1148,177 @@ class AppStore extends ChangeNotifier {
 
   void clearChat() {
     chat.clear();
+    aiPending.clear();
+    aiConversation = null;
+    _aiTimer?.cancel();
+    _aiTimer = null;
     changed();
+  }
+
+  // ───────────────────────── the real assistant (kept going while the chat is closed) ─────────────────────────
+
+  /// Is a question still being answered?
+  bool get aiBusy => aiPending.isNotEmpty;
+
+  String _tr(String key, [Map<String, Object?>? args]) => translate(locale, key, args);
+
+  String _errorText(ApiException e) {
+    if (e.code == 'throttled') return _tr('agent.too_many');
+    if (e.network) return _tr('srv.err_network');
+    if (e.status == 403) return _tr('agent.no_right');
+    return e.message ?? _tr('srv.err_server');
+  }
+
+  /// Sends one question to the company's assistant. The answer is made on the server in the background and comes back to the chat by itself, also
+  /// when the person has left the chat, looked at another page or closed the app for a while. The language of the answer follows the question.
+  Future<void> askAi(String text, {bool voice = false, Map<String, dynamic>? pick}) async {
+    final q = text.trim();
+    if (q.isEmpty || !serverMode) return;
+    addChat(ChatMessage(fromUser: true, text: q, voice: voice));
+    try {
+      final r = await serverRequest('POST', '/api/mobile/assistant/ask', {'message': q, 'conversationId': ?aiConversation, 'pick': ?pick});
+      aiPending.add({'ticket': r['ticket'], 'at': DateTime.now().toIso8601String()});
+      _persist();
+      notifyListeners();
+      _ensureAiPoll();
+    } on ApiException catch (e) {
+      addChat(ChatMessage(fromUser: false, text: _errorText(e)));
+    }
+  }
+
+  /// A recording of the microphone to words, by the server (it tells the language by itself). Throws [ApiException] with the server's reason.
+  Future<String> transcribe(List<int> bytes) async {
+    if (!serverMode) throw ApiException(0, 'network');
+    try {
+      final r = await ApiClient(serverUrl, token: _token, lang: locale).postFile('/api/mobile/assistant/voice', 'audio', bytes, 'voice.wav', 'audio/wav');
+      return '${r['text'] ?? ''}';
+    } on ApiException catch (e) {
+      if (e.unauthorized) await _expire();
+      rethrow;
+    }
+  }
+
+  /// Asks for the answers that are still on their way (when the app starts or comes back).
+  void resumeAi() => _ensureAiPoll();
+
+  void _ensureAiPoll() {
+    if (aiPending.isEmpty || !serverMode) {
+      _aiTimer?.cancel();
+      _aiTimer = null;
+      return;
+    }
+    _aiTimer ??= Timer.periodic(const Duration(seconds: 2), (_) => unawaited(_pollAi()));
+    unawaited(_pollAi());
+  }
+
+  Future<void> _pollAi() async {
+    if (_aiPolling || aiPending.isEmpty || !serverMode) return;
+    _aiPolling = true;
+    try {
+      for (final p in List<Map<String, dynamic>>.of(aiPending)) {
+        final asked = DateTime.tryParse('${p['at']}') ?? DateTime.now();
+        try {
+          final r = await serverRequest('GET', '/api/mobile/assistant/result/${p['ticket']}');
+          if (r['status'] == 'pending') {
+            if (DateTime.now().difference(asked) > const Duration(minutes: 10)) {
+              aiPending.remove(p);
+              _receiveAnswer(null);
+            }
+            continue;
+          }
+          aiPending.remove(p);
+          _receiveAnswer(r['answer'] is Map ? Map<String, dynamic>.from(r['answer'] as Map) : null);
+        } on ApiException catch (e) {
+          if (e.network) break; // no network now: the answer waits for us on the server
+          if (!serverMode) return;
+          aiPending.remove(p);
+          _receiveAnswer(null);
+        }
+      }
+    } finally {
+      _aiPolling = false;
+    }
+    if (aiPending.isEmpty) {
+      _aiTimer?.cancel();
+      _aiTimer = null;
+    }
+    _persist();
+    notifyListeners();
+  }
+
+  void _receiveAnswer(Map<String, dynamic>? a) {
+    final text = (a?['text'] as String?)?.trim() ?? '';
+    if (a?['conversationId'] is int) aiConversation = a!['conversationId'] as int;
+    final extra = <String, dynamic>{
+      for (final k in const ['proposal', 'askAmount', 'askTax', 'document', 'docAction'])
+        if (a?[k] != null) k: a![k],
+    };
+    final shown = text.isEmpty ? _tr('srv.err_server') : text;
+    chat.add(ChatMessage(fromUser: false, text: shown, extra: extra.isEmpty ? null : extra));
+    if (!aiChatOpen) _announce('ai', {'text': shown.length > 120 ? '${shown.substring(0, 120)}…' : shown}, _tr('nav.ai'), shown);
+  }
+
+  // ───────────────────────── news from the server ─────────────────────────
+
+  /// Puts a piece of news in the notification list of the app and, when the phone allows, in its notification shade.
+  void _announce(String kind, Map<String, String> args, String title, String body) {
+    serverNotices.insert(0, {'id': '$kind:${DateTime.now().microsecondsSinceEpoch}', 'kind': kind, 'a': args, 'at': DateTime.now().toIso8601String()});
+    if (serverNotices.length > 40) serverNotices.removeRange(40, serverNotices.length);
+    unawaited(Notifier.show(title, body));
+  }
+
+  static const _openTask = {'queued', 'claimed', 'needs_user'};
+
+  /// Follows the work of the robot (checks of the cabinet and Didox, payments) in the background of the whole app, not of one page: while something is
+  /// open, and for a few minutes after a button was pressed, it asks every few seconds; when a task ends or waits for the person it says so.
+  void watchAgent({Duration window = const Duration(minutes: 3)}) {
+    if (!serverMode || _agentDenied) return;
+    _agentWatchUntil = DateTime.now().add(window);
+    _agentTimer ??= Timer.periodic(const Duration(seconds: 8), (_) => unawaited(_pollAgent()));
+    unawaited(_pollAgent());
+  }
+
+  Future<void> _pollAgent() async {
+    if (_agentBusy || !serverMode) return;
+    _agentBusy = true;
+    var open = false;
+    var finished = false;
+    try {
+      final r = await serverRequest('GET', '/api/mobile/agent');
+      final tasks = [for (final t in (r['tasks'] as List? ?? const [])) if (t is Map) Map<String, dynamic>.from(t)];
+      for (final t in tasks) {
+        final id = (t['id'] as num).toInt();
+        final st = '${t['status']}';
+        final isOpen = _openTask.contains(st);
+        final old = _taskStatus[id];
+        if (isOpen) open = true;
+        if (_agentSeeded && old != st) {
+          final label = t['type'] == 'pay' ? _tr('agent.type_pay') : '${t['typeLabel']}';
+          final recent = DateTime.tryParse('${t['finishedAt']}')?.isAfter(DateTime.now().subtract(const Duration(minutes: 3))) ?? false;
+          if (!isOpen && (old != null || recent)) {
+            final extra = t['error'] != null && st == 'failed' ? ' · ${t['error']}' : '';
+            _announce('task', {'title': label, 'status': '${t['statusLabel']}$extra'}, label, '${t['statusLabel']}$extra');
+            finished = true;
+          } else if (st == 'needs_user' && old != null) {
+            _announce('task', {'title': label, 'status': '${t['waiting'] ?? t['statusLabel']}'}, label, '${t['waiting'] ?? t['statusLabel']}');
+          }
+        }
+        _taskStatus[id] = st;
+      }
+      _agentSeeded = true;
+    } on ApiException catch (e) {
+      if (e.status == 403) _agentDenied = true; // this person has no right to the tax pages: nothing to follow
+    } finally {
+      _agentBusy = false;
+    }
+    final watching = _agentWatchUntil != null && DateTime.now().isBefore(_agentWatchUntil!);
+    if ((!open && !watching) || _agentDenied) {
+      _agentTimer?.cancel();
+      _agentTimer = null;
+    }
+    _persist();
+    notifyListeners();
+    // what the robot read is in the books of the company now: read them again
+    if (finished) unawaited(syncNow());
   }
 }

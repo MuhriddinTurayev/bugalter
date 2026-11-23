@@ -395,7 +395,7 @@ class Proposal {
 }
 
 class ChatMessage {
-  ChatMessage({required this.fromUser, required this.text, DateTime? at, this.chips = const [], this.voice = false}) : at = at ?? DateTime.now();
+  ChatMessage({required this.fromUser, required this.text, DateTime? at, this.chips = const [], this.voice = false, this.extra}) : at = at ?? DateTime.now();
 
   final bool fromUser;
   final String text;
@@ -405,9 +405,16 @@ class ChatMessage {
   /// True when the person spoke this message (the words are the transcript).
   final bool voice;
 
-  Map<String, dynamic> toJson() => {'u': fromUser, 't': text, 'at': _s(at), 'v': voice};
+  /// What the real assistant added to its answer: a payment proposal to approve, a question about the amount or the tax, a note about a document.
+  /// Kept as the server sent it (camelCase); `done` is set on a proposal after the person pressed a button.
+  Map<String, dynamic>? extra;
 
-  factory ChatMessage.fromJson(Map<String, dynamic> j) => ChatMessage(fromUser: j['u'] as bool, text: j['t'] as String, at: _d(j['at']), voice: (j['v'] ?? false) as bool);
+  Map<String, dynamic> toJson() => {'u': fromUser, 't': text, 'at': _s(at), 'v': voice, if (extra != null) 'x': extra};
+
+  factory ChatMessage.fromJson(Map<String, dynamic> j) => ChatMessage(
+        fromUser: j['u'] as bool, text: j['t'] as String, at: _d(j['at']), voice: (j['v'] ?? false) as bool,
+        extra: j['x'] is Map ? Map<String, dynamic>.from(j['x'] as Map) : null,
+      );
 }
 
 class AuditEntry {

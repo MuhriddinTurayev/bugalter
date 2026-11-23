@@ -8,11 +8,16 @@ import 'package:flutter/services.dart';
 import '../../../core/scope.dart';
 import '../../../core/theme.dart';
 import '../../../data/assistant.dart';
+import '../../../data/api.dart';
 import '../../../data/models.dart';
+import '../../../data/recorder.dart';
+import '../../../data/store.dart';
 import '../../../data/voice.dart';
 import '../../widgets/ai_fab.dart';
 import '../../widgets/glass.dart';
+import '../agent/agent_actions.dart';
 import '../documents/document_form.dart';
+import 'ai_cards.dart';
 import '../tax/tax_report_screen.dart';
 import 'proposals_screen.dart';
 
@@ -32,7 +37,12 @@ class _AiScreenState extends State<AiScreen> {
   final _ctl = TextEditingController();
   final _scroll = ScrollController();
   final _voice = VoiceService();
-  bool _typing = false;
+  final _rec = VoiceRecorder(); // the real company: the recording goes to the server, which tells the language by itself
+  late final AppStore _st = context.readStore;
+  bool _localTyping = false;
+
+  /// Is an answer still on its way? (The real assistant answers in the background of the app, so this is the store's.)
+  bool get _typing => _st.serverMode ? _st.aiBusy : _localTyping;
 
   // voice message being recorded
   bool _recording = false, _transcribing = false, _finishing = false;
@@ -49,6 +59,7 @@ class _AiScreenState extends State<AiScreen> {
   void initState() {
     super.initState();
     Future.microtask(() => aiScreenOpen.value = true);
+    _st.aiChatOpen = true;
     _toBottom(jump: true);
   }
 
@@ -56,8 +67,10 @@ class _AiScreenState extends State<AiScreen> {
   void dispose() {
     // not synchronously: the widget tree is locked while a screen is being removed
     Future.microtask(() => aiScreenOpen.value = false);
+    _st.aiChatOpen = false;
     _clock?.cancel();
     _voice.dispose();
+    _rec.dispose();
     _ctl.dispose();
     _scroll.dispose();
     super.dispose();
@@ -81,8 +94,14 @@ class _AiScreenState extends State<AiScreen> {
     final s = context.readStore;
     final locale = s.locale;
     _ctl.clear();
+    if (s.serverMode) {
+      // the answer comes back by itself, also if this page is closed meanwhile
+      unawaited(s.askAi(q, voice: voice));
+      _toBottom();
+      return;
+    }
     s.addChat(ChatMessage(fromUser: true, text: q, voice: voice));
-    setState(() => _typing = true);
+    setState(() => _localTyping = true);
     _toBottom();
     await Future<void>.delayed(const Duration(milliseconds: 600));
     final reply = Assistant(s).answer(q, locale);
@@ -90,7 +109,7 @@ class _AiScreenState extends State<AiScreen> {
     _actions[msg] = reply.action;
     s.addChat(msg);
     if (mounted) {
-      setState(() => _typing = false);
+      setState(() => _localTyping = false);
       _toBottom();
       if (s.aiSpeak) _speak(msg);
     }
@@ -102,6 +121,7 @@ class _AiScreenState extends State<AiScreen> {
     if (_typing || _recording || _transcribing) return;
     FocusScope.of(context).unfocus();
     await _voice.stopSpeaking();
+    if (_st.serverMode) return _startServerVoice(locked);
     final ok = await _voice.init();
     if (!mounted) return;
     if (!ok) {
@@ -148,6 +168,46 @@ class _AiScreenState extends State<AiScreen> {
     } catch (_) {
       _resetVoice();
       if (mounted) context.toast(context.t('ai.no_voice'));
+    }
+  }
+
+  /// The real company: record the microphone; the words come from the server (in the language that was spoken).
+  Future<void> _startServerVoice(bool locked) async {
+    final ok = await _rec.start(onLevel: (l) {
+      if (!mounted || !_recording) return;
+      setState(() {
+        _levels.add(l);
+        if (_levels.length > 34) _levels.removeAt(0);
+      });
+    });
+    if (!mounted) return;
+    if (!ok) {
+      context.toast(context.t('ai.no_mic'));
+      return;
+    }
+    setState(() {
+      _recording = true;
+      _finishing = false;
+      _locked = locked || _pressUp;
+      _live = '';
+      _levels.clear();
+      _secs = 0;
+    });
+    _clock = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _secs++);
+    });
+  }
+
+  /// The recording to words by the server. Empty when it could not be understood (the reason was already shown).
+  Future<String> _serverWords() async {
+    final bytes = await _rec.stop();
+    if (bytes == null || bytes.length < 4000) return '';
+    if (!mounted) return '';
+    try {
+      return (await _st.transcribe(bytes)).trim();
+    } on ApiException catch (e) {
+      if (mounted) context.toast(apiErrorText(context, e));
+      return '\u0000';
     }
   }
 
@@ -215,6 +275,7 @@ class _AiScreenState extends State<AiScreen> {
 
   Future<void> _cancelVoice() async {
     await _voice.cancel();
+    await _rec.cancel();
     _resetVoice();
   }
 
@@ -226,11 +287,19 @@ class _AiScreenState extends State<AiScreen> {
       _recording = false;
       _transcribing = true;
     });
-    await _voice.stop();
-    await Future<void>.delayed(const Duration(milliseconds: 700)); // the last words arrive just after stopping
-    if (!mounted) return;
-    final text = _live.trim();
-    _resetVoice();
+    String text;
+    if (_st.serverMode) {
+      text = await _serverWords();
+      if (!mounted) return;
+      _resetVoice();
+      if (text == '\u0000') return; // refused with a reason that was already shown
+    } else {
+      await _voice.stop();
+      await Future<void>.delayed(const Duration(milliseconds: 700)); // the last words arrive just after stopping
+      if (!mounted) return;
+      text = _live.trim();
+      _resetVoice();
+    }
     if (text.isEmpty) {
       context.toast(context.t('ai.voice_failed'));
       return;
@@ -299,7 +368,7 @@ class _AiScreenState extends State<AiScreen> {
 
     return PageScaffold(
       title: context.t('nav.ai'),
-      subtitle: context.t('ai.note'),
+      subtitle: context.t(s.serverMode ? 'ai.note_live' : 'ai.note'),
       actions: [
         GlassIconButton(icon: s.aiSpeak ? Icons.volume_up_rounded : Icons.volume_off_rounded, tooltip: context.t(s.aiSpeak ? 'ai.speak_on' : 'ai.speak_off'), color: s.aiSpeak ? context.g.accent : null, onTap: _toggleSpeak),
         if (msgs.isNotEmpty) GlassIconButton(icon: Icons.delete_sweep_outlined, tooltip: context.t('ai.clear'), onTap: _clear),
@@ -324,6 +393,7 @@ class _AiScreenState extends State<AiScreen> {
               onAction: a == null ? null : () => _run(a),
               speaking: _speaking == m,
               onSpeak: m.fromUser ? null : () => _speak(m),
+              below: m.extra == null ? null : AiExtraCards(message: m, onAsk: (label, pick) => _st.askAi(label, pick: pick)),
             );
           }
           if (_typing && mi == msgs.length) return const _TypingBubble(key: ValueKey('typing'));
@@ -700,11 +770,12 @@ class _SuggestionChip extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({super.key, required this.text, required this.fromUser, this.voice = false, this.action, this.onAction, this.onSpeak, this.speaking = false});
+  const _Bubble({super.key, required this.text, required this.fromUser, this.voice = false, this.action, this.onAction, this.onSpeak, this.speaking = false, this.below});
   final String text;
   final bool fromUser, voice, speaking;
   final AiAction? action;
   final VoidCallback? onAction, onSpeak;
+  final Widget? below;
 
   @override
   Widget build(BuildContext context) {
@@ -739,6 +810,7 @@ class _Bubble extends StatelessWidget {
             decoration: BoxDecoration(color: g.fillStrong, borderRadius: radius, border: Border.all(color: g.border)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
               Padding(padding: const EdgeInsets.only(right: 6), child: SelectableText(text, style: TextStyle(color: g.text, fontSize: 15, height: 1.4))),
+              if (below != null) Padding(padding: const EdgeInsets.only(right: 6), child: below!),
               if (action != null && onAction != null) ...[
                 const SizedBox(height: 12),
                 AppButton(label: context.t('ai.act.${action!.kind.name}'), icon: _icon(action!.kind), compact: true, expanded: false, onPressed: onAction),

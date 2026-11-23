@@ -70,6 +70,7 @@ class _AgentScreenState extends State<AgentScreen> {
     try {
       final r = await store.serverRequest('POST', path);
       message = r['message'] as String? ?? context.t('agent.refreshed');
+      store.watchAgent();
     } on ApiException catch (e) {
       message = apiErrorText(context, e);
     }

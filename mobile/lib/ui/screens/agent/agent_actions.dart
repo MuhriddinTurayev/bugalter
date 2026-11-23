@@ -22,6 +22,7 @@ Future<void> askAgent(BuildContext context, String path) async {
     final r = await store.serverRequest('POST', path);
     message = r['message'] as String? ?? context.t('agent.refreshed');
     ok = true;
+    store.watchAgent();
   } on ApiException catch (e) {
     message = apiErrorText(context, e);
   }

@@ -14,6 +14,10 @@ String noticeText(BuildContext context, AppNotice n) {
       final days = int.tryParse(n.args['days'] ?? '') ?? 0;
       final type = context.t('taxtype.${n.args['type']}');
       return days >= 0 ? context.t('notif.tax_left', {'type': type, 'days': days}) : context.t('notif.tax_late', {'type': type, 'days': -days});
+    case 'ai':
+      return context.t('notif.ai', {'text': n.args['text'] ?? ''});
+    case 'task':
+      return context.t('notif.task', {'title': n.args['title'] ?? '', 'status': n.args['status'] ?? ''});
     case 'payroll':
       return context.t('notif.payroll', {'month': context.monthName(int.tryParse(n.args['month'] ?? '1') ?? 1)});
     default:
@@ -25,6 +29,8 @@ IconData _icon(String kind) => switch (kind) {
       'overdue' => Icons.event_busy_rounded,
       'tax' => Icons.receipt_long_rounded,
       'payroll' => Icons.groups_rounded,
+      'ai' => Icons.auto_awesome_rounded,
+      'task' => Icons.smart_toy_rounded,
       _ => Icons.notifications_rounded,
     };
 
